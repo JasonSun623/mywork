@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<launch>
+	
+	<node pkg="seldat_robot" name="Wifi_Node" type="internet_check.py" output="screen"></node>
+
+	<node pkg="seldat_robot" name="STM_Node" type="robot_node_stm_new.py" output="screen"></node>
+
+        <node pkg="seldat_robot" name="PID_Node" type="tpid_velocity.py" output="screen"></node>
+
+        <node pkg="seldat_robot" name="Safety_Node" type="safety" output="screen"></node>
+
+	<node pkg="seldat_robot" name="Odom"	type="odom.py" output="screen"></node>	
+
+        <node pkg="seldat_robot" name="Twist_Node" type="twist" output="screen"></node>
+
+	<node pkg="seldat_robot" name="Robot_Info" type="info_display.py" output="screen"></node>
+		
+	<node pkg="seldat_robot" name="Robot_Zone" type="zone_checker.py" output="screen"></node>
+<!--		
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
+     		<arg name="port" value="9090"/>
+	</include>
+-->
+<!--
+        <node pkg="seldat_robot" name="Odom_Encoder_Node" type="odom_encoder.py" output="screen"></node>
+
+        <node pkg="lpms_imu" name="IMU_Node" type="lpms_imu_node" output="screen"></node>
+
+        <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf" output="screen">
+                <param name="output_frame" value="odom_combined"/>
+                //<param name="base_footprint_frame" value="base_link"/>//
+                <param name="freq" value="50.0"/>
+                <param name="sensor_timeout" value="1.0"/>
+                <param name="odom_used" value="true"/>
+                <param name="imu_used" value="true"/>
+                <param name="vo_used" value="false"/>
+                <remap from="odom" to="odom_encoder" />
+        </node>
+
+        <node pkg="seldat_robot" name="Odom_Robot_Node" type="odom_robot.py" output="screen"></node>
+-->
+	<node pkg="sicktoolbox_wrapper" type="sicklms" name="sicklms" output="screen">
+		<param name="port" value="/dev/SICK_LMS200" />
+		<param name="baud" value="38400" />
+		<param name="angle" value="180" />
+		<param name="resolution" value="1.0" />
+		<param name="units" value="cm" />
+	</node>
+
+</launch>

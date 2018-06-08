@@ -1,0 +1,8 @@
+prefix=/home/seldat/seldat_robot/install
+
+Name: predefined_plan
+Description: Description of predefined_plan
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/seldat/seldat_robot/install/lib 
+Requires: 

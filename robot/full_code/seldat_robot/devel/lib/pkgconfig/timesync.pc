@@ -1,0 +1,8 @@
+prefix=/home/seldat/seldat_robot/devel
+
+Name: timesync
+Description: Description of timesync
+Version: 1.0.0
+Cflags: -I/home/seldat/seldat_robot/devel/include -I/home/seldat/seldat_robot/src/timesync_ros/include
+Libs: -L/home/seldat/seldat_robot/devel/lib -ltimesync
+Requires: dynamic_reconfigure roscpp message_runtime

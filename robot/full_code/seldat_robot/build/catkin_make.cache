@@ -1,0 +1,2 @@
+predefined_plan:seldat_robot:timesync_ros
+-DCATKIN_DEVEL_PREFIX=/home/seldat/seldat_robot/devel -DCMAKE_INSTALL_PREFIX=/home/seldat/seldat_robot/install -G Unix Makefiles

@@ -1,0 +1,133 @@
+///////////////////////////////////
+///// Safety rules version 2.0 ////
+///// AGV version 1.0	       ////
+///////////////////////////////////
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <ros/ros.h>
+#include <move_base_msgs/MoveBaseAction.h>
+
+#include "std_msgs/Float32.h"
+#include "std_msgs/Float64.h"
+#include "std_msgs/Int32.h"
+#include "std_msgs/String.h"
+#include <nav_msgs/Odometry.h>
+#include <sensor_msgs/LaserScan.h>
+#include <geometry_msgs/Vector3.h>
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "actionlib_msgs/GoalStatusArray.h"
+
+#include <std_msgs/UInt8MultiArray.h>
+#include <math.h>
+
+#define PI 3.14159265
+
+float data_lms[181], laser_posi[181][2];
+int w_flag = 0, d_flag = 0;
+bool flag_state = true, flag_info = true;
+
+//0.2 = 0, 0.4 = 0.2, 0.6 = 0.4, 0.8 = 0.6
+float d_right_min_y = -0.6, d_left_min_y = 0.6; 						   // min danger zone
+float d_max_x = 0.6, d_right_max_y = -0.6, d_left_max_y = 0.6; // max danger zone
+float w_right_min_y = -1.0, w_left_min_y = 1.0;						   // min warning zone
+float w_max_x = 1.1, w_right_max_y = -1.0, w_left_max_y = 1.0; // max warning zone
+float range = 0.0;
+
+//Publishes
+ros::Publisher pub_stop_flag;
+
+void ScanCallBack(const sensor_msgs::LaserScan::ConstPtr& scan){
+     	//scan->ranges[]
+	if (flag_state == true){
+		w_flag = 0; d_flag = 0;
+	     //flag_info = false;
+	     //============================================================================
+	     for(int i = 0; i < 181; i++){
+	    	 data_lms[i] = scan->ranges[i];
+	    	 laser_posi[i][0] = data_lms[i] * sin((PI*i)/180);
+	    	 laser_posi[i][1] = data_lms[i] * -cos((PI*i)/180);
+
+	    	 if ((laser_posi[i][0] <= d_max_x)&&(laser_posi[i][1] <= d_left_max_y)&&(laser_posi[i][1] >= d_right_max_y))
+	    		 d_flag++;
+	     	 else if ((laser_posi[i][0] <= w_max_x)&&(laser_posi[i][1] <= w_left_max_y)&&(laser_posi[i][1] >= w_right_max_y))
+	     		 w_flag++;
+	     }
+
+	     //w_flag = 0; d_flag = 0;
+	     //printf("d_flag [%d]\n", d_flag);
+	     //printf("w_flag [%d]\n", w_flag);
+	     //============================================================================
+	     
+	     std_msgs::Int32 msg;
+	     if ((w_flag < 3)&&(d_flag < 3)){
+	     	msg.data = 1802;
+	     	pub_stop_flag.publish(msg);
+	     }
+	     else if ((w_flag >= 3)&&(d_flag < 3)){
+	        msg.data = 1402;
+	        pub_stop_flag.publish(msg);
+	        //printf("slowdown\n");
+	     }
+	     else if ((d_flag >=3)&&(w_flag < 3)){
+	        msg.data = 1002;
+	        pub_stop_flag.publish(msg);
+	        //printf("stop\n");
+	     }
+	 }
+
+	 else if (flag_state == false){
+		 if (flag_info == false){
+			 //ROS_INFO("PAUSE SAFETY NODE");
+			 flag_info = true;
+		 }
+	 }
+}
+
+void LineDetection_Callback(const std_msgs::Int32& msg){ //on
+    if((int)msg.data==3203||(int)msg.data==3204){
+    	flag_state = true;
+        //ROS_INFO("FLAG OFF");
+    }
+}
+
+void LineDetectionCtrl_Callback(const std_msgs::Int32& msg){ //tat
+    if((int)msg.data==1203||(int)msg.data==1204){
+    	flag_state = false;
+	//ROS_INFO("FLAG ON");
+    }
+    else if ((int)msg.data==1200) 
+    	flag_state = true;
+}
+
+void twheel_Callback(const std_msgs::Int32& msg){
+    if (msg.data <= 500){
+    	range = 0;
+    }
+
+    else if (msg.data > 500){
+    	range = 0.0002*msg.data - 0.2;
+    }
+
+    d_max_x = 0.6 + range;
+    w_max_x = 1.1 + range;
+    //printf("Danger zone max ---- [%f]\n", d_right_max_x);
+}
+
+int main(int argc, char** argv){
+	ros::init(argc, argv,"safety_rule");
+	ros::NodeHandle nh;
+	ros::Subscriber  sub_laserscan = nh.subscribe("/scan",1,ScanCallBack);					//get laser data
+	ros::Subscriber  sub_LineDetectionCtrl_Node = nh.subscribe("linedetectionctrl",1,LineDetectionCtrl_Callback);
+	ros::Subscriber  sub_LineDetection_Node = nh.subscribe("linedetectioncallback",1,LineDetection_Callback);
+	ros::Subscriber	 sub_Traction = nh.subscribe("twheel",1,twheel_Callback);
+	
+	pub_stop_flag=nh.advertise<std_msgs::Int32>("stop_flag",10);
+	ros::Rate loop_rate(50);
+	while(ros::ok())
+	{
+           ros::spinOnce();
+	}
+}

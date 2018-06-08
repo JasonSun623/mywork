@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!--Setup-->
+	<arg name="model" />
+	<arg name="gui" default="False" />
+	<param name="robot_description" textfile="$(arg model)" />
+	<param name="use_gui" value="$(arg gui)"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" > </node>
+	
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+		<param name="publish_frequency" type="double" value="50.0" />
+	</node>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find urdf_tutorial)/urdf.rviz" required="true" />
+  	
+	<!--laser-->
+	<node pkg="sicktoolbox_wrapper" type="sicklms" name="sicklms" >
+		<param name="port" value="/dev/ttyUSB0" />                       <!--ttyUSB*-->
+		<param name="baud" value="38400" />
+		<param name="angle" value="180" />
+		<param name="resolution" value="1.0" />
+		<param name="units" value="cm" />
+	</node>
+	
+  	<node pkg="tf" type="static_transform_publisher" name="base_link_2_laser_link" args="0.256 0 0.0925 0 0 0 /base_link /laser 100"/>
+  
+  <!--  Global Parameters -->
+  <param name="/use_sim_time" value="true"/>
+
+  <!-- Run the map server -->
+   <node name="map_server" pkg="map_server" type="map_server" args="$(find seldat_robot)/maps/map.yaml" output="screen"/>
+
+  <!-- Run AMCL -->
+  <!--<include file="$(find amcl)/examples/amcl_diff.launch" >-->
+  <include file="$(find seldat_robot)/launch/amcl.launch" />  <!--custom amcl-->
+  </include> 
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find seldat_robot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find seldat_robot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find seldat_robot)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find seldat_robot)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find seldat_robot)/param/base_local_planner_params.yaml" command="load" />
+<!-- 
+	<rosparam file="$(find seldat_robot)/param/move_base_params.yaml" command="load" />
+-->
+    <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+	<remap from="cmd_vel" to="/cmd_vel_mux/input/navi"/>
+  </node>
+</launch>

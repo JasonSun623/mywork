@@ -1,0 +1,972 @@
+#!/usr/bin/env python
+import rospy
+import time
+from std_msgs.msg import UInt16,UInt8,Int8,Int32, UInt32, String,UInt8MultiArray,Float32
+from geometry_msgs.msg import Quaternion,Vector3
+from math import pi
+from sensor_msgs.msg import LaserScan
+from std_msgs.msg import Header
+import numpy as np
+#from opencv_line import line_follow
+class Echo(object):
+
+    ##############################____INIT____############################
+    
+    def __init__(self):
+        self.laser_data = []
+        self.PID_enable = 0
+        self.rfid = 0
+        self.lift_val = 3
+        self.stop_flag = 0
+        self.flag = 0
+        self.flag_1 = 0
+        self.flag_2 = 0
+        self.status = 0
+        self.right_ss = 0
+        self.left_ss = 0
+        self.ir_ss = 0
+        self.back_left_line_ss = 0
+        self.turning = 0
+        self.turning_b = 0
+        self.e = 0
+        self.home = 2047
+        self.angle = 0
+        self.vel = 0
+        self.right_value = 1397
+        self.tt = 0
+        self.vel_value = 2947
+        self.left_value1 = 2497
+        self.test = 0
+        self.temp = 0
+        self.motor_msg = Vector3()
+        self.count = 0
+	self.count_1 = 0
+        self.rig_home = 1397
+        self.cam_home = 143#151#88 
+        self.cam_error = 0
+        self.rec = 0
+        self.control = 0
+        self.cam_stop = 0
+        self.pallet_num = 0
+        self.right_stop = 0
+        self.server = 0
+        rospy.init_node('LINE_FOLLOWER')
+        ###########################__SUBSCRIBER__##############################
+        IR_sub = rospy.Subscriber('line', UInt32, self.IR_callback)
+        key_sub = rospy.Subscriber('key_press', String, self.key_callback)
+        rfid_sub = rospy.Subscriber('rfid',Quaternion, self.rfid_callback)
+        laserscan_sub = rospy.Subscriber('/scan', LaserScan, self.laser_callback)
+        server_sub = rospy.Subscriber('linedetectionctrl', Int32, self.server_callback)
+        lift_sub = rospy.Subscriber('/lift', UInt32, self.lift_callback)
+        cam_sub = rospy.Subscriber('CX_value', UInt32, self.cam_callback)
+        rec_sub = rospy.Subscriber('red_pub', String, self.rec_callback)
+        control_sub = rospy.Subscriber('position_pub', String, self.control_callback)
+        pallet_number_sub = rospy.Subscriber('/pospalletup', Int32, self.pallet_num_callback)
+        ###########################__PUBLISH__##############################
+        self.vel_pub = rospy.Publisher('motor_command',Vector3,queue_size = 100)
+        self.lift_pub = rospy.Publisher('lift_controll', String,queue_size = 100)
+        self.program_pub = rospy.Publisher('linedetectioncallback', Int32,queue_size = 100)
+    ##############################____CALL_BACK____#########################
+            #######################__Pallet_num_SENSOR__########################
+    def pallet_num_callback(self,msg):
+        data = msg.data
+        if data == 1:
+            self.pallet_num = 'So Mot'
+        elif data == 11 :
+            self.pallet_num = 'So Muoi Mot'
+        elif data == 25 :
+            self.pallet_num = 'So Hai muoi lam'
+        elif data == 5:
+            self.pallet_num = 'So Nam'
+	elif data == 2:
+	    self.pallet_num = 'So Hai'
+        else:
+            pass
+                #######################__FRONT_IR_SENSOR__########################
+    def IR_callback(self,msg):
+	line_sensor = str(msg.data)
+	self.right_ss = int(line_sensor[1])
+        self.left_ss = int(line_sensor[7])
+        self.ir_ss=int(line_sensor[2]+line_sensor[3]+line_sensor[4]+line_sensor[5]+line_sensor[6])
+                #######################__TELEOP__########################
+    def key_callback(self,msg):
+        data = msg.data
+        if data == 'stop pid':
+            self.PID_enable = 0
+        elif data == 'key p is press' :
+            self.PID_enable = 1
+        elif data == 'key m is press' :
+            self.PID_enable = 2
+        elif data == 'key l is press' :
+            self.PID_enable = 3
+
+                #######################__RFID__########################
+    def rfid_callback(self,msg):
+	x = int(msg.x)
+	y = int(msg.y)
+	z = int(msg.z)
+	w = int(msg.w)
+	self.rfid = str(x)+str(y)+str(z)+str(w)
+
+                #######################__LASER__########################
+    def laser_callback(self,msg):
+        del self.laser_data[:]
+        for i in range(0,180):
+                self.laser_data.append(msg.ranges[i])
+        self.stop_flag = list(filter(lambda x: x > 0 and x < 0.9  ,self.laser_data))
+        self.stop_flag = len(self.stop_flag)
+                #######################__LASER__########################
+    def server_callback(self,msg):                      
+        data = msg.data
+	if data == 1203:
+		self.PID_enable = 1
+	elif data == 1200:
+		self.PID_enable = 2
+		self.status = 0
+	elif data == 1204:
+                self.PID_enable = 3
+        elif data == 1205: #start
+                self.PID_enable = 1
+        '''
+        elif data == 1206: # out mode
+                self.PID_enable = 3
+        elif data == 1207: #taking pallet
+                self.PID_enable = 3
+        '''
+                
+                #######################__LIFT__########################
+    def lift_callback(self,msg):
+        self.lift_val = msg.data
+                #######################__CAM__########################
+    def cam_callback(self,msg):
+        data = msg.data
+        if data == 2043:
+            self.cam_error = 0
+        elif data == 2044:
+            self.cam_error = 0
+        else:
+            self.cam_error = data - self.cam_home
+                #######################__RED_DETECT__########################
+    def rec_callback(self,msg):
+        self.rec = msg.data
+                #######################__RED_DETECT__########################
+    def control_callback(self,msg):
+        data = msg.data
+        self.control = data
+    ###########################____DEFINE_FUNCTION____#######################
+
+        ####################__error_calculation__###################
+    def error(self):
+	ss = self.ir_ss
+	if ss == 10001:
+		error = 1
+	elif ss == 11011:
+		error = 1
+	elif ss == 10011:
+		error = 4 
+	elif ss == 11:
+		error = 10
+	elif ss == 111:
+		error = 12
+	elif ss == 1111:
+		error = 14
+	elif ss == 11001:
+		error = -4
+	elif ss == 11000:
+		error = -10
+	elif ss == 11100 :
+		error = -12
+        elif ss == 11110 :
+                error = -14
+        elif ss == 11111 :
+                error = 0	
+	else :
+		error = 0
+	return error
+
+        ####################__PID_calculation__###################
+    def PID_calculation(self,Kp,Kd,Ki):
+        kp = Kp 
+        kd = Kd
+        ki = Ki
+        sum_e = 0
+        last_e = 0
+        e_o = self.error()
+        if e_o == 1:
+                self.e = 0
+        else :
+                self.e = e_o
+        sum_e = sum_e + self.e
+        self.turning = Kp*self.e + Kd*(self.e - last_e) + Ki*sum_e
+        #print '  ' ,'e_o = ',e_o,'e = ' , e,'turning = ',turning,'last_e = ',last_e,'back_stop = ', ss_stop,'ir_ss = ',ir_ss, '   '
+        last_e = self.e
+    def back_PID_calculation(self,Kp,Kd,Ki):
+        sum_e = 0
+        last_e = 0
+        e_o = self.back_error_left()
+	#print 'error = ',self.back_error_left()
+        if e_o == 1:
+                self.e_b = 0
+        else :
+                self.e_b = e_o
+        sum_e = sum_e + self.e_b
+        self.turning_b = Kp*self.e_b + Kd*(self.e_b - last_e) + Ki*sum_e
+        #print '  ' ,'e_o = ',e_o,'e = ' , e,'turning = ',turning,'last_e = ',last_e,'back_stop = ', ss_stop,'ir_ss = ',ir_ss, '   '
+        last_e = self.e_b
+    def cam_PID_calculation(self,Kp,Kd,Ki):
+        sum_e = 0
+        last_e = 0
+        e_o = self.cam_error
+	#print 'error = ',self.cam_error
+        if e_o == 1:
+                self.e_b = 0
+        else :
+                self.e_b = e_o
+        sum_e = sum_e + self.e_b
+        self.turning_b = Kp*self.e_b + Kd*(self.e_b - last_e) + Ki*sum_e
+        #print '  ' ,'e_o = ',e_o,'e = ' , e,'turning = ',turning,'last_e = ',last_e,'back_stop = ', ss_stop,'ir_ss = ',ir_ss, '   '
+        last_e = self.e_b
+                #####################____straight_line____####################
+    def straight_line(self,vel):
+        print 'moving straight'
+        if self.right_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 1797
+            self.vel_pub.publish(self.motor_msg)
+        elif self.left_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 2247
+            self.vel_pub.publish(self.motor_msg)
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home - self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = vel
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+    def straight_line_1(self,vel):
+        print 'moving straight 1'
+        if self.right_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 1597
+            self.vel_pub.publish(self.motor_msg)
+        elif self.left_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 2547
+            self.vel_pub.publish(self.motor_msg)
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home - self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = vel
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+    def straight_line_2(self,vel):
+        print 'moving straight 2'
+        if self.left_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 2447
+            self.vel_pub.publish(self.motor_msg)
+        elif self.right_ss == 0:
+            self.motor_msg.x = vel
+            self.motor_msg.z = 1797
+            self.vel_pub.publish(self.motor_msg)
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home - self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = vel
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+        #####################____curve_line____####################
+    def curve_right_line(self):
+        if self.tt == 1:
+            if self.left_ss == 0 and self.right_ss == 1:
+                self.tt = 2
+        elif self.tt == 2:
+            if self.left_ss == 1:
+                self.tt = 3
+            else:
+                self.motor_msg.x = 700
+                self.right_value = self.right_value + 10
+                self.motor_msg.z = self.right_value
+                self.vel_pub.publish(self.motor_msg)
+        elif self.tt == 3:
+            #print 'self.tt = 3'
+            self.count = self.count + 1
+            if self.count == 50:
+                self.tt = 4
+                self.count = 0
+            else:
+                self.motor_msg.x = 700
+                self.right_value = self.right_value - 10
+                self.motor_msg.z = self.right_value
+                self.vel_pub.publish(self.motor_msg)
+        elif self.tt == 4:
+            #print 'self.tt = 4'
+            self.count = self.count + 1
+            if self.count == 30:
+                self.count = 0
+                self.tt = 0
+                self.right_stop = 1
+                self.tt = 0
+            else:
+                #print 'here'
+                self.motor_msg.x = 700
+                self.motor_msg.z = 2747
+                self.vel_pub.publish(self.motor_msg)
+        elif self.right_ss == 0:
+                if self.right_value <= 1397 and self.right_value > 1197: #2747
+                        self.motor_msg.x = 700
+                        self.right_value = int(self.right_value - 1)
+                #elif (self.right_value <= 1197) and self.right_value > 950:
+                #        self.motor_msg.x = 700
+                #        self.right_value = int(self.right_value - 1)
+                elif (self.right_value <= 1197):#3197
+                        self.motor_msg.x = 700
+                        self.right_value = 900
+                        self.tt = 1
+                #print 'right_value = ',self.right_value
+                self.motor_msg.z = self.right_value
+                self.vel_pub.publish(self.motor_msg)
+        elif self.left_ss == 0:
+            self.motor_msg.x = 1000
+            self.motor_msg.z = 2247
+            self.vel_pub.publish(self.motor_msg)
+            #self.vel = 1
+            self.left_ss = 1
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home - self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = 1300
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+    def curve_left_line(self):
+        #print self.tt
+        if self.tt == 1:
+            self.motor_msg.x = 1300
+            self.motor_msg.z = 3147
+            self.vel_pub.publish(self.motor_msg)
+            if  self.right_ss == 0:
+                self.motor_msg.x = 1100
+                self.motor_msg.z = 2947
+                self.vel_pub.publish(self.motor_msg)
+                self.vel = 1
+                self.tt = 0
+                self.right_ss = 1
+        elif self.vel == 1:
+            self.vel_value  = self.vel_value - 10
+            self.motor_msg.x = 800
+            self.motor_msg.z = self.vel_value
+            self.vel_pub.publish(self.motor_msg)
+            if self.vel_value <= 2697:
+                self.vel = 0
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+                self.vel_value = 0
+		self.test = 0
+                self.PID_enable = 2
+        elif self.left_ss == 0:
+            if self.left_value1 > 2490 and self.left_value1 < 2587: #2747
+                self.left_value1 = int(self.left_value1 + 3)
+            elif (self.left_value1 >= 2587) and self.left_value1 < 2947:
+                self.left_value1 = int(self.left_value1 + 8)
+            elif (self.left_value1 >= 2947) and self.left_value1 < 2957:
+                self.left_value1 = int(self.left_value1 + 7)
+            elif (self.left_value1 >= 2957):#3197
+                self.left_value1 = 3197
+                self.tt = 1
+            self.motor_msg.x = 1300
+            self.motor_msg.z = self.left_value1
+            self.vel_pub.publish(self.motor_msg)
+	    print 'left_value',self.left_value1
+        elif self.right_ss == 0:
+            self.motor_msg.x = 1000
+            self.motor_msg.z = 1547
+            self.vel_pub.publish(self.motor_msg)
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home - self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = 1300
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+        #####################____moving_pallet___####################
+    def moving_to_pallet(self):
+        if self.right_ss == 0:
+            self.motor_msg.x = -800
+            self.motor_msg.z = 2097
+            self.vel_pub.publish(self.motor_msg)
+        elif self.left_ss == 0:
+            self.motor_msg.x = -800
+            self.motor_msg.z = 1997
+            self.vel_pub.publish(self.motor_msg)
+        else:
+            self.PID_calculation(15,4,0.001)
+            self.angle = self.home + self.turning
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                    self.angle = 4095
+            elif self.angle < 0:
+                    self.angle = 0
+            self.motor_msg.x = -1000
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+    def moving_to_pallet_back(self,string):
+        if self.rec == 'red_detect':
+            if self.control == string:
+                print '1',string,self.control
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+                self.cam_stop = 1
+            else:
+                self.cam_PID_calculation(15,4,0.001)
+                self.angle = self.home + self.turning_b
+                self.angle = round(self.angle)
+                self.angle = int(self.angle)
+                if self.angle > 4095:
+                    self.angle = 4095
+                elif self.angle < 0:
+                    self.angle = 0
+                self.motor_msg.x = -100
+                self.motor_msg.z = self.angle
+                self.vel_pub.publish(self.motor_msg)
+        else:
+            self.cam_PID_calculation(15,4,0.001)
+            self.angle = self.home + self.turning_b
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > 4095:
+                self.angle = 4095
+            elif self.angle < 0:
+                self.angle = 0
+            self.motor_msg.x = -800
+            self.motor_msg.z = self.angle
+            self.vel_pub.publish(self.motor_msg)
+    def moving_back(self,speed,home):
+        self.cam_PID_calculation(15,4,0.001)
+        self.angle = home + self.turning_b
+        self.angle = round(self.angle)
+        self.angle = int(self.angle)
+        if self.angle > 4095:
+            self.angle = 4095
+        elif self.angle < 0:
+            self.angle = 0
+        self.motor_msg.x = speed
+        self.motor_msg.z = self.angle
+        self.vel_pub.publish(self.motor_msg)
+        #####################____taking_pallet___####################
+    def taking_pallet(self):
+        if self.test == 0:
+	    if self.temp == 0:
+                self.count = self.count + 1
+                if self.count == 20:
+                    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                elif self.count == 100:
+                    self.count = 0
+                    self.temp = 1
+            elif self.temp == 1:
+                if self.left_ss == 0:
+                    self.motor_msg.x = 100
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                    self.temp = 2
+		else:
+		    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 2:
+                if self.ir_ss == 10001:
+                    self.temp = 3
+            elif self.temp == 3:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2049
+                self.vel_pub.publish(self.motor_msg)
+                time.sleep(2)
+                self.temp = 4
+            elif self.temp == 4:
+                if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                    self.temp = 0
+                    self.test = 1
+                else:
+                   self.straight_line(1300)                
+        elif self.test == 1:
+            if self.rfid == '76192151112' or self.rfid == '108161156112' or self.rfid == '14732732':
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2049
+                self.vel_pub.publish(self.motor_msg)
+		time.sleep(2)
+                rfid = 0
+                self.test = 2
+            else:
+                self.straight_line(800)
+        elif self.test == 2:
+            self.count = self.count + 1
+            if self.count == 1 :
+                self.motor_msg.x = 0
+                self.motor_msg.z = 3747
+                self.vel_pub.publish(self.motor_msg)
+            elif self.count == 40:
+                self.motor_msg.x = 1300
+                self.motor_msg.z = 3995
+                self.vel_pub.publish(self.motor_msg)
+	    elif self.count == 80:
+                self.count = 0
+                self.test = 3
+        elif self.test == 3:
+            if self.temp == 0:
+                if self.left_ss == 0:
+                    self.motor_msg.x = 100
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                    self.temp = 1
+                else:
+                    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 1:
+                if self.ir_ss == 10001:
+                    self.temp = 2
+            elif self.temp == 2:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+		time.sleep(2)
+                self.temp = 3
+            elif self.temp == 3:
+                if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                    self.motor_msg.x = 0
+                    self.motor_msg.z = 2047
+                    self.vel_pub.publish(self.motor_msg)
+                    time.sleep(2)
+                    self.temp = 0
+                    self.test = 5
+                else:
+                    self.straight_line_2(800)
+	elif self.test == 5:
+            self.lift_pub.publish("lift_down")
+            if self.lift_val == 2:
+                self.lift_pub.publish("lift_stop")
+                self.test = 6
+        elif self.test == 6:
+            if self.cam_stop == 1:
+                self.lift_pub.publish("lift_up")
+                if self.lift_val == 1:
+                    self.lift_pub.publish("lift_stop")
+                    self.test = 7
+                    self.cam_stop = 0
+            else:
+                self.moving_to_pallet_back(self.pallet_num)
+                print 'cam_error = ', self.cam_error
+        elif self.test == 7:
+            if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                self.test = 8
+            else:
+                self.straight_line_2(800)
+	elif self.test == 8:
+	    self.count = self.count + 1
+	    if self.count == 150:
+		self.count = 0
+		self.test = 9
+	    else:
+		self.straight_line_2(800)
+        elif self.test == 9:
+            if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+		time.sleep(2)
+		self.status = 1
+                self.PID_enable = 2
+                self.test = 0
+            else:
+                self.straight_line_2(800)
+            
+        '''
+        elif self.test == 5:
+            if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                self.motor_msg.x = -800
+            	self.motor_msg.z = 2047
+            	self.vel_pub.publish(self.motor_msg)
+                self.test = 6
+            else:
+                self.moving_to_pallet_back(string)
+        elif self.test == 6:
+            self.count = self.count + 1
+            if self.count == 30:
+            	self.motor_msg.x = 0
+            	self.motor_msg.z = 2047
+            	self.vel_pub.publish(self.motor_msg)
+            	self.count = 0
+            	self.test = 7
+        elif self.test == 7:
+            self.lift_pub.publish("lift_up")
+            if self.lift_val == 1:
+                self.lift_pub.publish("lift_stop")
+                self.test = 8
+        elif self.test == 8:
+            if self.right_ss == 0:
+                self.motor_msg.x = 600
+                self.motor_msg.z = 1347
+                self.vel_pub.publish(self.motor_msg)
+                self.test = 9
+            else:
+                self.motor_msg.x = 600
+                self.motor_msg.z = 195
+                self.vel_pub.publish(self.motor_msg)
+        elif self.test == 9:
+            if self.temp == 0:
+                if self.right_ss == 0: 
+                    self.rig_home = self.rig_home - 1
+                    if self.rig_home < 1147:
+                        self.rig_home = 647
+                    self.motor_msg.x = 700
+                    self.motor_msg.z = self.rig_home
+                    self.vel_pub.publish(self.motor_msg)
+                elif self.left_ss == 0:
+                    self.temp = 1
+                else:
+                    self.motor_msg.x = 900
+                    self.motor_msg.z = self.rig_home
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 1:
+                self.rig_home = self.rig_home + 20
+                if self.ir_ss == 10001:
+                    self.temp = 2
+                else:
+                    self.motor_msg.x = 1100
+                    self.motor_msg.z = self.rig_home
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 2:
+                self.count = self.count + 1
+                if self.count == 50 :
+                    self.temp = 3
+                    self.count = 0
+                else:
+                    self.straight_line_1(900)
+            elif self.temp == 3:
+                self.status = 1
+                self.curve_left_line()
+        else:
+            pass
+        '''
+        #####################____put_pallet_down___####################
+    def put_down_pallet(self):
+        if self.test == 0:
+	    if self.temp == 0:
+                self.count = self.count + 1
+                if self.count == 20:
+                    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                elif self.count == 100:
+                    self.count = 0
+                    self.temp = 1
+            elif self.temp == 1:
+                if self.left_ss == 0:
+                    self.motor_msg.x = 100
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                    self.temp = 2
+		else:
+		    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 2:
+                if self.ir_ss == 10001:
+                    self.temp = 3
+            elif self.temp == 3:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2049
+                self.vel_pub.publish(self.motor_msg)
+                time.sleep(2)
+                self.temp = 4
+            elif self.temp == 4:
+                if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                    self.temp = 0
+                    self.test = 1
+                else:
+                   self.straight_line(1300)                
+        elif self.test == 1:
+            if self.rfid == '76192151112' or self.rfid == '108161156112' or self.rfid == '14732732':
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2049
+                self.vel_pub.publish(self.motor_msg)
+		time.sleep(2)
+                rfid = 0
+                self.test = 2
+            else:
+                self.straight_line(800)
+        elif self.test == 2:
+            self.count = self.count + 1
+            if self.count == 1 :
+                self.motor_msg.x = 0
+                self.motor_msg.z = 3995
+                self.vel_pub.publish(self.motor_msg)
+            elif self.count == 40:
+                self.motor_msg.x = 1300
+                self.motor_msg.z = 3995
+                self.vel_pub.publish(self.motor_msg)
+	    elif self.count == 80:
+                self.count = 0
+                self.test = 3
+        elif self.test == 3:
+            if self.temp == 0:
+                if self.left_ss == 0:
+                    self.motor_msg.x = 100
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+                    self.temp = 1
+                else:
+                    self.motor_msg.x = 1300
+                    self.motor_msg.z = 3995
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 1:
+                if self.ir_ss == 10001:
+                    self.temp = 2
+            elif self.temp == 2:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+		time.sleep(2)
+                self.temp = 0
+		self.test = 4
+	elif self.test == 4:
+            self.count = self.count + 1
+            if self.ir_ss == 00000 and self.left_ss == 0 and self.right_ss == 0:
+                self.count = self.count
+                self.test = 5
+            else:
+                self.moving_to_pallet()
+        elif self.test == 5:
+            self.count_1 = self.count_1 + 1
+	    if self.count_1 == 40:
+		self.count_1 = 0
+            	self.motor_msg.x = 0
+            	self.motor_msg.z = 2047
+            	self.vel_pub.publish(self.motor_msg)
+            	self.lift_pub.publish("lift_down")
+            	if self.lift_val == 2:
+                	self.lift_pub.publish("lift_stop")
+                	self.test = 6
+        elif self.test == 6:
+            self.count = self.count - 1
+            if self.count <= 80:
+                self.count = 0
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+                self.test = 7
+        elif self.test == 7:
+            if self.temp == 0:
+                self.lift_pub.publish("lift_up")
+                if self.lift_val == 1:
+                    self.lift_pub.publish("lift_stop")
+                    self.temp = 1
+            elif self.temp == 1:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 195
+                self.vel_pub.publish(self.motor_msg)
+                time.sleep(2)
+                self.temp = 2                
+            elif self.temp == 2:
+                if self.right_ss == 0:
+                    self.motor_msg.x = 100
+                    self.motor_msg.z = 195
+                    self.vel_pub.publish(self.motor_msg)
+                    self.temp = 3
+                else:
+                    self.motor_msg.x = 1300
+                    self.motor_msg.z = 195
+                    self.vel_pub.publish(self.motor_msg)
+            elif self.temp == 3:
+                if self.ir_ss == 10001:
+                    self.temp = 4
+            elif self.temp == 4:
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+                time.sleep(2)
+                self.temp = 5
+            elif self.temp == 5:
+                self.count = self.count + 1
+                if self.count == 100:
+                    self.count = 0
+                    self.temp = 6
+                else:
+                    self.straight_line_1(1000)
+            elif self.temp == 6:
+                self.status = 2
+                self.curve_left_line()
+        else:
+            pass
+    ##############################____MAIN____#########################
+    def main_run(self):
+        r = rospy.Rate(20)
+        while not rospy.is_shutdown():
+            if self.PID_enable == 1:
+                #self.curve_right_line()
+                #self.moving_to_pallet_back(self.pallet_num)
+                #self.taking_pallet(self.pallet_num)
+                #'''
+                if self.stop_flag >= 10 and self.flag == 0:
+                    self.motor_msg.x = 0
+                    self.vel_pub.publish(self.motor_msg)
+                    print 'have object in front from 0 to 180 degree'
+                    self.flag = 1
+                elif self.flag == 1:
+                    if self.stop_flag < 10:
+                        self.flag = 0
+                    else:
+                        self.motor_msg.x = 0
+                        self.vel_pub.publish(self.motor_msg)
+                        print 'have object in front from 0 to 180 degree'
+                else:
+                    self.taking_pallet()
+                #'''
+            elif self.PID_enable == 2:
+                if self.status == 1:
+                    self.program_pub.publish(3203)
+                elif self.status == 2:
+                    self.program_pub.publish(3204)
+                self.laser_data = []
+                self.PID_enable = 0
+                self.rfid = 0
+                self.lift_val = 3
+                self.stop_flag = 0
+                self.flag = 0
+                self.flag_1 = 0
+                self.flag_2 = 0
+                self.status = 0
+                self.right_ss = 0
+                self.left_ss = 0
+                self.ir_ss = 0
+                self.back_left_line_ss = 0
+                self.turning = 0
+                self.turning_b = 0
+                self.e = 0
+                self.e_b = 0
+                self.e_b = 0
+                self.home = 2047
+                self.angle = 0
+                self.vel = 0
+                self.right_value = 1397
+                self.tt = 0
+                self.vel_value = 2947
+                self.left_value1 = 2497
+                self.test = 0
+                self.temp = 0
+                self.motor_msg = Vector3()
+                self.count = 0
+                self.count_1 = 0
+                self.rig_home = 1397
+                self.motor_msg.x = 0
+                self.motor_msg.z = 2047
+                self.vel_pub.publish(self.motor_msg)
+                self.cam_home = 143#151# 88
+                self.cam_error = 0
+                self.rec = 0
+                self.control = 0
+                self.cam_stop = 0
+                self.pallet_num = 0
+                self.right_stop = 0
+                self.server = 0
+            elif self.PID_enable == 3:
+                if self.stop_flag >= 10 and self.flag == 0:
+                    self.motor_msg.x = 0
+                    self.vel_pub.publish(self.motor_msg)
+                    print 'have object in front from 0 to 180 degree'
+                    self.flag = 1
+                elif self.flag == 1:
+                    if self.stop_flag < 10:
+                        self.flag = 0
+                    else:
+                        self.motor_msg.x = 0
+                        self.vel_pub.publish(self.motor_msg)
+                        #print 'have object in front from 0 to 180 degree'
+                else:
+                    if self.test == 0:
+                        self.lift_pub.publish("lift_down")
+                        if self.lift_val == 2:
+                            self.lift_pub.publish("lift_stop")
+                            self.test = 1
+                    elif self.test == 1:
+                        self.count = self.count + 1
+                        if self.count == 200:
+                            self.test = 2
+                            self.count = 0
+                        else:
+                            self.motor_msg.x = 1000
+                            self.motor_msg.z = 2047
+                            self.vel_pub.publish(self.motor_msg)
+                    elif self.test == 2:
+                        self.motor_msg.x = 0
+                        self.motor_msg.z = 2047
+                        self.vel_pub.publish(self.motor_msg)
+                        time.sleep(10)
+                        self.test = 3
+                    elif self.test == 3:
+                        self.lift_pub.publish("lift_up")
+                        if self.lift_val == 1:
+                            self.lift_pub.publish("lift_stop")
+                            self.test = 4
+                    elif self.test == 4:
+                        self.count = self.count + 1
+                        if self.count == 200:
+                            self.test = 5
+                            self.count = 0
+                        else:
+                            self.motor_msg.x = -1000
+                            self.motor_msg.z = 2047
+                            self.vel_pub.publish(self.motor_msg)
+                    elif self.test == 5:
+                        self.motor_msg.x = 0
+                        self.motor_msg.z = 2047
+                        self.vel_pub.publish(self.motor_msg)
+                        time.sleep(2)
+                        self.test = 0
+                        self.status = 2
+                        self.PID_enable = 2
+                        
+                        
+                    #self.put_down_pallet()
+            elif self.PID_enable == 0:
+                #print ' stop PID '
+                #print 'self.pallet_num = ',self.pallet_num,type(self.pallet_num)
+                pass
+            r.sleep()
+            
+if __name__ == '__main__':
+    run = Echo()
+    run.main_run()
