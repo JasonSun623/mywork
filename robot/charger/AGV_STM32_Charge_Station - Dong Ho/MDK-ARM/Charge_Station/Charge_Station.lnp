@@ -1,0 +1,25 @@
+--cpu Cortex-M3
+"charge_station\startup_stm32f103xe.o"
+"charge_station\system_stm32f1xx.o"
+"charge_station\stm32f1xx_hal_msp.o"
+"charge_station\stm32f1xx_it.o"
+"charge_station\main.o"
+"charge_station\stm32f1xx_hal_flash_ex.o"
+"charge_station\stm32f1xx_hal_rcc_ex.o"
+"charge_station\stm32f1xx_hal_cortex.o"
+"charge_station\stm32f1xx_hal_dma.o"
+"charge_station\stm32f1xx_hal_gpio_ex.o"
+"charge_station\stm32f1xx_hal_uart.o"
+"charge_station\stm32f1xx_hal_tim_ex.o"
+"charge_station\stm32f1xx_hal_rcc.o"
+"charge_station\stm32f1xx_hal_gpio.o"
+"charge_station\stm32f1xx_hal_pwr.o"
+"charge_station\stm32f1xx_hal_tim.o"
+"charge_station\stm32f1xx_hal_flash.o"
+"charge_station\stm32f1xx_hal.o"
+"charge_station\stm32f1xx_hal_adc.o"
+"charge_station\stm32f1xx_hal_adc_ex.o"
+--library_type=microlib --strict --scatter "Charge_Station\Charge_Station.sct"
+--diag_suppress=L6329 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "Charge_Station.map" -o Charge_Station\Charge_Station.axf

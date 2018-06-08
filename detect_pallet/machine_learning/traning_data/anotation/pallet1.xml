@@ -1,0 +1,26 @@
+<annotation>
+	<folder>pallet</folder>
+	<filename>pallet1.jpg</filename>
+	<path>/home/dongho/Desktop/seldat_work/detect_pallet/machine_learning/traning_data/pallet/pallet1.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>728</width>
+		<height>485</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>pallet</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>28</xmin>
+			<ymin>26</ymin>
+			<xmax>699</xmax>
+			<ymax>469</ymax>
+		</bndbox>
+	</object>
+</annotation>
