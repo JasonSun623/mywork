@@ -1,6 +1,6 @@
 Configuration	Charge_Station
-STM32CubeMX 	4.22.0
-Date	02/05/2018
+STM32CubeMX 	4.26.0
+Date	06/26/2018
 MCU	STM32F103RCTx
 
 
@@ -34,10 +34,10 @@ Pin Nb	PINs	FUNCTIONs	LABELs
 22	PA6	GPIO_EXTI6	IR_Receive
 23	PA7	GPIO_Output	IR_Receive_BK
 26	PB0	GPIO_Output	Charge
-27	PB1	GPIO_Input	Up_LMS
-28	PB2	GPIO_Input	Down_LMS
-29	PB10	GPIO_Output	Up_Motor
-30	PB11	GPIO_Output	Down_Motor
+27	PB1	GPIO_Input	Forward_LMS
+28	PB2	GPIO_Input	Backward_LMS
+29	PB10	GPIO_Output	Forward_Motor
+30	PB11	GPIO_Output	Backward_Motor
 33	PB12	GPIO_Input	Charge_LMS
 34	PB13	GPIO_Output	Buzzer
 35	PB14	GPIO_Output	Operator_Light
@@ -61,7 +61,7 @@ SOFTWARE PROJECT
 
 Project Settings : 
 Project Name : Charge_Station
-Project Folder : D:\2.Projects\1SELDAT_Code_DEV\STM32F4\AGV_STM32_Charge_Station
+Project Folder : /home/dongho/Desktop/seldat_work/robot/charger/AGV_STM32_Charge_Station - Dong Ho
 Toolchain / IDE : MDK-ARM V5
 Firmware Package Name and Version : STM32Cube FW_F1 V1.6.0
 
@@ -75,8 +75,7 @@ Set all free pins as analog (to optimize the power consumption) : No
 
 
 Toolchains Settings : 
-Compiler Optimizations : Balanced Size/Speed
-
+Compiler Optimizations : 
 
 
 

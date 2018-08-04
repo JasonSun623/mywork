@@ -5,7 +5,7 @@
   ******************************************************************************
   ** This notice applies to any and all portions of this file
   * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
+  * USER CODE END. Other portions of this file, whether
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
@@ -167,7 +167,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_ADC1_Init();
-	
+
 	HAL_TIM_Base_Start(&htim4);
   HAL_TIM_Base_Start_IT(&htim3);
 	//---Battery LED---
@@ -176,19 +176,19 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOB,Batt_lvl_3_Pin,GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOB,Batt_lvl_4_Pin,GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOB,Batt_lvl_5_Pin,GPIO_PIN_SET);
-	
+
 	//---Error Light---//0 = off
 	Error_Off;
 	//---Operator Light---//0 = off
 	Operator_Off;
 	//---Buzzer---//0 = off
 	Buzzer_Off;
-	
+
 	//---Charge---//0 = off
 	Charge_Disable;
 	//---Motor---//0 = off
 	Motor_Off();
-	
+
 	//---UART DMA---
 	len = sizeof(receive_data)/sizeof(receive_data[0]);
 	HAL_UART_Receive_DMA(&huart1,receive_data,len);
@@ -196,13 +196,13 @@ int main(void)
 	//---ADC DMA---
 	HAL_ADC_Start_DMA(&hadc1,(uint32_t*) adc1_value,3);
 	HAL_Delay(1000);
-  
+
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 		//Get DMA data
 		get_data();
-		
+
 		//Auto restart if temp too high
 		if (adc1_value_temp >= 90){
 						snprintf((char*)buffer, sizeof buffer\
@@ -221,7 +221,7 @@ int main(void)
 						Error_On;
 						Operator_Off;
 		}
-		
+
 		//Response to server while waiting
 		if ((data_complete == 1)&&(data_id == Waiting)&&(workflow == State_1)){
 			snprintf((char*)buffer, sizeof buffer\
@@ -247,7 +247,7 @@ int main(void)
 				delay_us(50000);
 				wait_motor++;
 			}
-			
+
 			if (HAL_GPIO_ReadPin(GPIOB,Charge_LMS_Pin) == 1){
 				lms_ = 1;
 				workflow = State_3;
@@ -261,7 +261,7 @@ int main(void)
 				Error_Off;
 			  Operator_On;
 			}
-			
+
 			Motor_Off();
 			data_complete = 0;
 			for (int i=0; i<len; i++) receive_data[i] = '\0';
@@ -280,7 +280,7 @@ int main(void)
 				snprintf((char*)buffer, sizeof buffer\
 				,"%s%d%s%d%s%d%s%.1f%s"\
 				,"{\"id\":",Station_ID,",\"status\":",Charge_charging,",\"temp\":",adc1_value_temp,",\"batt\":",adc1_value_batt,"}\n");//r
-			
+
 			HAL_UART_Transmit_IT(&huart1,buffer, sizeof buffer);
 			for (int i=0; i<len; i++) receive_data[i] = '\0';
 			data_complete = 0;
@@ -306,14 +306,14 @@ int main(void)
 
 		//Full condition
 		if ((workflow == State_2)&&(adc1_value_batt >= 29.3)){
-			Charge_Disable;		
+			Charge_Disable;
 			snprintf((char*)buffer, sizeof buffer\
 				,"%s%d%s%d%s%d%s%.1f%s"\
 				,"{\"id\":",Station_ID,",\"status\":",Charge_full,",\"temp\":",adc1_value_temp,",\"batt\":",adc1_value_batt,"}\n");//r
 			HAL_UART_Transmit_IT(&huart1,buffer, sizeof buffer);
 			for (int i=0; i<len; i++) receive_data[i] = '\0';
 			data_complete = 0;
-			
+
 			delay_us(5000);
 			Motor_Backward();
 			wait_motor = 0;
@@ -322,7 +322,7 @@ int main(void)
 				wait_motor++;
 			}
 		}
-		
+
 		//while charging show battery lvl
 		if (workflow == State_2)
 			battery_indicator();
@@ -333,7 +333,7 @@ int main(void)
 			HAL_GPIO_WritePin(GPIOB,Batt_lvl_4_Pin,GPIO_PIN_SET);
 			HAL_GPIO_WritePin(GPIOB,Batt_lvl_5_Pin,GPIO_PIN_SET);
 		}
-			
+
   }
 }
 
@@ -342,10 +342,10 @@ int main(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance==htim3.Instance)
-	{	
+	{
 		//Battery calc
 		adc1_value_batt = adc1_value[0]*0.007531f;
-		
+
 		//Temp of charge station
 		NTC_value = (10.89 * adc1_value[1])/(13513.5 - (3.3 * adc1_value[1]));
 		min_diff = 1000;
@@ -420,7 +420,7 @@ void get_data(void)
 			if (receive_data[i] == 'c')
 				data_order = i;
 		}
-		
+
 		if (data_order != 0){
 			for (int i = 0; i<len; i++){
 				data_reorder[i] = receive_data[data_order];
@@ -441,7 +441,7 @@ void get_data(void)
 				data_reorder[i] = receive_data[i];
 			}
 		}
-		
+
 		//find the start and stop
 		if ((data_reorder[0] == 'c')&&(data_reorder[5] == 'e')){
 			data_complete = 1;
@@ -767,10 +767,10 @@ static void MX_USART1_UART_Init(void)
 
 }
 
-/** 
+/**
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void) 
+static void MX_DMA_Init(void)
 {
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
@@ -785,9 +785,9 @@ static void MX_DMA_Init(void)
 
 }
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -807,8 +807,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(IR_Receive_BK_GPIO_Port, IR_Receive_BK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, Charge_Pin|Forward_Motor_Pin|Backward_Motor_Pin|Buzzer_Pin 
-                          |Operator_Light_Pin|Error_Light_Pin|Batt_lvl_1_Pin|Batt_lvl_2_Pin 
+  HAL_GPIO_WritePin(GPIOB, Charge_Pin|Forward_Motor_Pin|Backward_Motor_Pin|Buzzer_Pin
+                          |Operator_Light_Pin|Error_Light_Pin|Batt_lvl_1_Pin|Batt_lvl_2_Pin
                           |Batt_lvl_3_Pin|Batt_lvl_4_Pin|Batt_lvl_5_Pin|Option_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : IR_Receive_Pin */
@@ -823,11 +823,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(IR_Receive_BK_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Charge_Pin Forward_Motor_Pin Backward_Motor_Pin Buzzer_Pin 
-                           Operator_Light_Pin Error_Light_Pin Batt_lvl_1_Pin Batt_lvl_2_Pin 
+  /*Configure GPIO pins : Charge_Pin Forward_Motor_Pin Backward_Motor_Pin Buzzer_Pin
+                           Operator_Light_Pin Error_Light_Pin Batt_lvl_1_Pin Batt_lvl_2_Pin
                            Batt_lvl_3_Pin Batt_lvl_4_Pin Batt_lvl_5_Pin Option_Pin */
-  GPIO_InitStruct.Pin = Charge_Pin|Forward_Motor_Pin|Backward_Motor_Pin|Buzzer_Pin 
-                          |Operator_Light_Pin|Error_Light_Pin|Batt_lvl_1_Pin|Batt_lvl_2_Pin 
+  GPIO_InitStruct.Pin = Charge_Pin|Forward_Motor_Pin|Backward_Motor_Pin|Buzzer_Pin
+                          |Operator_Light_Pin|Error_Light_Pin|Batt_lvl_1_Pin|Batt_lvl_2_Pin
                           |Batt_lvl_3_Pin|Batt_lvl_4_Pin|Batt_lvl_5_Pin|Option_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
