@@ -120,6 +120,7 @@ class line_follow():
         self.program_pub = rospy.Publisher('linedetectioncallback', Int32,queue_size = 100)
         self.line_pos = rospy.Publisher('line_pos',Int32,queue_size = 100)
         self.charge_cmd = rospy.Publisher('/ctrlRobotHardware',Int32,queue_size = 100)
+        self.charge_vol = rospy.Publisher('/charge_vol',Float32,queue_size = 100)
         
         
     ##############################____CALL_BACK____#########################
@@ -548,13 +549,13 @@ class line_follow():
 #                                    self.ste_pub.publish(6000)
                             elif self.loss_line_temp_5 == 3:
                                 #print "here = " ,(self.last_encoder_2) + (self.t_enc)
-                                if ((self.last_encoder_2) + (self.t_enc)) <= -1800:
+                                if ((self.last_encoder_2) + (self.t_enc)) <= -2400:
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.loss_line_temp_5 = 4
                                 else:
                                     self.vel_pub.publish(-500)
-                                    self.ste_pub.publish(6000)
+                                    self.ste_pub.publish(self.home_value + 700)
                                     #self.ste_pub.publish(self.home_value)
                             elif self.loss_line_temp_5 == 4:
                                 self.vel_pub.publish(0)
@@ -655,14 +656,14 @@ class line_follow():
 #                                    self.ste_pub.publish(4700)
                             elif self.loss_line_temp_5 == 3:
                                 #print "here = " ,(self.last_encoder_2) + (self.t_enc)
-                                if ((self.last_encoder_2) + (self.t_enc)) <= -1800:
+                                if ((self.last_encoder_2) + (self.t_enc)) <= -2400:
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     #self.ste_pub.publish(self.home_value)
                                     self.loss_line_temp_5 = 4
                                 else:
                                     self.vel_pub.publish(-500)
-                                    self.ste_pub.publish(4700)
+                                    self.ste_pub.publish(self.home_value - 700)
                             elif self.loss_line_temp_5 == 4:
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
@@ -1321,7 +1322,7 @@ class line_follow():
                                 if self.dict_['status'] == 7006 or self.dict_['status'] == 7005:
                                     self.take_pallet = 11
                                     self.charger_error = 1
-                                print self.dict_
+                                self.charge_vol.publish(self.dict_['batt'])
                         elif self.take_pallet == 11:    
                             self.flag_2 = 1
                             time.sleep(10)

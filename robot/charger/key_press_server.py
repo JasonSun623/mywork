@@ -5,7 +5,7 @@ import socket
 import ast
 import json
 
-host = "192.168.0.200"
+host = "192.168.0.201"
 port = 8081
 stdscr = curses.initscr()
 curses.cbreak()
