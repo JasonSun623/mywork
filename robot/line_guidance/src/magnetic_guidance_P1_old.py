@@ -316,7 +316,7 @@ class line_follow():
     #####################__angle_control__#####################
     def angle_controll(self,speed):
         pos = self.position(self.mag_ss)
-        turning_value = self.pid_cal(self.position(self.mag_ss),15,200)
+        turning_value = self.pid_cal(self.position(self.mag_ss),23,5)
         #print turning_value,int(turning_value)
         self.angle = self.home_value + turning_value
         self.angle = round(self.angle)
@@ -333,7 +333,7 @@ class line_follow():
     #####################__angle_control_charger__#####################
     def angle_controll_charger(self,speed):
         pos = self.position(self.mag_ss)
-        turning_value = self.pid_cal(self.position(self.mag_ss),15,200)
+        turning_value = self.pid_cal(self.position(self.mag_ss),23,5)
         #print turning_value,int(turning_value)
         self.angle = self.home_value + turning_value
         self.angle = round(self.angle)
