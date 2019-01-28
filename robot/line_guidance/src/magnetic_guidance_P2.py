@@ -104,6 +104,7 @@ class line_follow():
         #self.lane_to_turn = 1
         #self.lane_to_turn_ = 2
         self.charger_ready           = 0
+        self.turn_off_pc_flag        = 0
         self.pallet                  = 0
         self.lane_to_turn            = None
         self.has_sub_line            = None
@@ -125,7 +126,7 @@ class line_follow():
         stear_enc = rospy.Subscriber('/pos', Vector3, self.stear_callback)
         t_enc = rospy.Subscriber('/pos', Vector3, self.t_callback)
         pallet_pos_sub = rospy.Subscriber('/pospallet',Int32 , self.pallet_pos_callback)
-        command_robot = rospy.Subscriber('/cmdAreaPalket',String , self.server_callback)
+        command_robot = rospy.Subscriber('/cmdAreaPallet',String , self.server_callback)
         server_sub = rospy.Subscriber('linedetectionctrl', Int32, self.server_cmd_callback)
         ###########################__PUBLISH__##############################
         self.vel_pub = rospy.Publisher('twheel',Int32,queue_size = 100)
@@ -135,6 +136,7 @@ class line_follow():
         self.program_pub = rospy.Publisher('linedetectioncallback', Int32,queue_size = 100)
         self.line_pos = rospy.Publisher('line_pos',Int32,queue_size = 100)
         self.line_pub = rospy.Publisher('line_enable',Int32,queue_size = 100)
+        self.charge_cmd = rospy.Publisher('/ctrlRobotHardware',Int32,queue_size = 100)
         
         
     ##############################____CALL_BACK____#########################
@@ -222,22 +224,22 @@ class line_follow():
     def server_callback(self,msg):
         data              = msg.data
         dict_data         = json.loads(data)
-        self.pallet       = dict_data["pallet"] # lenh can lam
+        self.pallet       = dict_data["pallet"] 
         self.dir_main     = dict_data["dir_main"]
-        self.lane_to_turn = dict_data["bay"]#so line phu
-        self.has_sub_line = dict_data["hasSubLine"]#check co can line phu khong
-        self.dir_sub    = dict_data["direction"]
+        self.lane_to_turn = dict_data["bay"]
+        self.has_sub_line = dict_data["hasSubLine"]
+        self.dir_sub      = dict_data["dir_sub"]
         self.row          = dict_data["row"]
         if self.pallet == 2:
             self.PID_enable = 3
         else:
             self.PID_enable = 1
-        #print(dict_data["row"],type(dict_data["row"]))
+        ##print(dict_data["row"],type(dict_data["row"]))
     def server_cmd_callback(self,msg):
         data = msg.data
         if data == 1206:
             self.charger_ready = 1
-        if data == 1207:
+        elif data == 1207:
             self.PID_enable = 4
     ##########################__Key_callback__###########################
     
@@ -270,6 +272,8 @@ class line_follow():
             self.pos_stop = 1
         else:
             self.pos_stop = 0
+        if data == 1214:
+            self.turn_off_pc_flag = 1
 
     #############################____FUNCTIONs____##########################
         ####################__error_calculation__#####################
@@ -284,7 +288,7 @@ class line_follow():
             pos = 8
             self.line_flag = 1
         else:
-            #print("pos____",ss_aveg,"pos***",ss_sum)
+            ##print("pos____",ss_aveg,"pos***",ss_sum)
             pos = (ss_aveg/ss_sum) + 1
             self.line_flag = 0
         if pos < 7:
@@ -302,12 +306,12 @@ class line_follow():
         for i in range(0,len(mag_ss)) :
             ss_aveg += mag_ss[i] * i
         ss_sum += self.count_front_magss
-        #print("ss_aveg= ",ss_aveg,"ss_sum = ",self.count_front_magss)
+        ##print("ss_aveg= ",ss_aveg,"ss_sum = ",self.count_front_magss)
         if ss_sum == 0:
             pos = 8
             self.line_flag = 1
         else:
-            #print("pos____",ss_aveg,"pos***",ss_sum)
+            ##print("pos____",ss_aveg,"pos***",ss_sum)
             pos = (ss_aveg/ss_sum) + 1
             self.line_flag = 0
         if pos < 7:
@@ -318,12 +322,12 @@ class line_follow():
             self.pos_left = 0
             self.pos_right = 1
             self.center = 0
-        print("pos = ",pos)
+        #print("pos = ",pos)
         return pos
         
         #####################__Timer__#####################
     def timer(self,pos,loss_line_flag):
-        #print "self.loss_line_flag_1 = " ,self.loss_line_flag_1,"pos = ",pos
+        ##print "self.loss_line_flag_1 = " ,self.loss_line_flag_1,"pos = ",pos
         if pos >= 4 and pos < 6:
             self.time = -60#0.9
         elif pos >= 6 and pos < 7:
@@ -343,7 +347,7 @@ class line_follow():
         elif pos >15 :
             self.time = -90
         #self.line_pos.publish(pos)
-        #print "pos_1 = ",pos
+        ##print "pos_1 = ",pos
         
         
         
@@ -369,7 +373,7 @@ class line_follow():
         derivative = (proportional - self.last_proportional)
         ster_value = int(proportional* kp +  derivative*kd)# + self.integral*ki) #- 1
         self.last_proportional = proportional
-        #print "pos = ",pos,"ster_value = ",ster_value
+        ##print "pos = ",pos,"ster_value = ",ster_value
         #time.sleep(0.05)
         return ster_value
         
@@ -377,7 +381,7 @@ class line_follow():
     def angle_controll(self,speed):
         pos = self.position(self.mag_ss)
         turning_value = self.pid_cal(self.position(self.mag_ss),30,150)#35,5
-        #print turning_value,int(turning_value)
+        ##print turning_value,int(turning_value)
         self.angle = self.home_value + turning_value
         self.angle = round(self.angle)
         self.angle = int(self.angle)
@@ -387,7 +391,7 @@ class line_follow():
             self.angle += 45#2
         else:
             self.angle = self.angle
-        print "self.angle",self.angle,"pos",pos
+        #print "self.angle",self.angle,"pos",pos
         if self.angle > self.home_value + 150 and self.angle <= self.home_value + 250 :
             self.angle +=45
             if speed < 0:
@@ -438,26 +442,7 @@ class line_follow():
                 speed = 0
             else:
                 speed = speed - 200
-        print "speed",speed, "angle",self.angle#,"pos",pos
-#        if pos > 14:
-#            self.turn_flag = 1
-#            self.timer(pos,self.loss_line_flag_1)
-#        elif pos < 2:
-#            self.turn_flag = 1
-#            self.timer(pos,self.loss_line_flag_1)
-#        elif pos == 8 and self.turn_flag == 1:
-#            if self.pos_left == 1:
-#                self.temp_1 = 1
-#                self.flag = 1
-#                self.temp_2 = 0
-#                self.turn_flag = 0
-#                self.stop_flag = 0
-#            elif self.pos_right == 1:
-#                self.temp_1 = 2
-#                self.flag = 2
-#                self.temp_2 = 0
-#                self.stop_flag = 0
-#                self.turn_flag = 0
+        #print "speed",speed, "angle",self.angle#,"pos",pos
         self.vel_pub.publish(speed)
         self.ste_pub.publish(self.angle)
         if pos == 16:
@@ -472,9 +457,9 @@ class line_follow():
     
     def angle_controll_front(self,speed):
         pos = self.position_front(self.mag_ss_front)
-        #print("pos______",pos)
+        ##print("pos______",pos)
         turning_value = self.pid_cal(self.position_front(self.mag_ss_front),30,120)#35,5
-        #print turning_value,int(turning_value)
+        ##print turning_value,int(turning_value)
         self.angle = self.home_value - turning_value
         self.angle = round(self.angle)
         self.angle = int(self.angle)
@@ -484,7 +469,7 @@ class line_follow():
             self.angle += 21#2
         else:
             self.angle = self.angle
-        print "self.angle",self.angle
+        #print "self.angle",self.angle
         if self.angle > self.home_value + 150 and self.angle <= self.home_value + 250 :
             self.angle +=0
             if speed < 0:
@@ -523,27 +508,10 @@ class line_follow():
         elif pos < 4:
             self.angle = self.angle + 220
             
-        print "speed",speed, "angle",self.angle#,"pos",pos
+        #print "speed",speed, "angle",self.angle#,"pos",pos
         self.vel_pub.publish(speed)
         self.ste_pub.publish(self.angle)
 
-    #####################__angle_control_charger__#####################
-#    def angle_controll_charger(self,speed):
-#        pos = self.position(self.mag_ss)
-#        turning_value = self.pid_cal(self.position(self.mag_ss),35,5)
-#        #print turning_value,int(turning_value)
-#        self.angle = self.home_value + turning_value
-#        self.angle = round(self.angle)
-#        self.angle = int(self.angle)
-#        #print "self.angle",self.angle
-#        if self.angle > 9500:
-#            self.angle = 9500
-#        elif self.angle < 500:
-#            self.angle = 500
-#        print "speed",speed, "angle",self.angle
-#        #print "left = ", self.left,"right = ",self.right,"center = ",self.center
-#        self.vel_pub.publish(speed)
-#        self.ste_pub.publish(self.angle)
         #####################__Loss_line_left__#####################
     def loss_line(self):
         #self.loss_line_flag_1 = 1
@@ -551,7 +519,7 @@ class line_follow():
             self.last_encoder = -(self.t_enc)
             self.loss_line_temp = 1
         elif self.loss_line_temp == 1:
-            print ((self.last_encoder) + (self.t_enc))
+            #print ((self.last_encoder) + (self.t_enc))
             if self.count_magss > 3 :
                 self.loss_line_temp = 2
             elif ((self.last_encoder) + (self.t_enc)) < -1500 :
@@ -603,14 +571,14 @@ class line_follow():
                 if self.mag_left_value == 0:
                     self.loss_line_temp = 6
                 else:
-                    #print(((self.last_encoder_1) + (self.t_enc)))
+                    ##print(((self.last_encoder_1) + (self.t_enc)))
                     self.vel_pub.publish(1000)  #left
                     self.ste_pub.publish(2000)
             elif self.dir_main == 2:
                 if self.mag_left_value == 0:
                     self.loss_line_temp = 6
                 else:
-                    #print(((self.last_encoder_1) + (self.t_enc)))
+                    ##print(((self.last_encoder_1) + (self.t_enc)))
                     self.vel_pub.publish(-1000)  #left
                     self.ste_pub.publish(2000)
             else:
@@ -654,7 +622,7 @@ class line_follow():
             self.loss_line_temp = 4
             self.last_encoder_1 = -(self.t_enc)
         elif self.loss_line_temp == 4:
-            print("encoder_charger",((self.last_encoder_1) + (self.t_enc)))
+            #print("encoder_charger",((self.last_encoder_1) + (self.t_enc)))
             if ((self.last_encoder_1) + (self.t_enc)) < -800:
                 self.loss_line_temp = 5
                 self.vel_pub.publish(-1300)
@@ -663,7 +631,7 @@ class line_follow():
                 self.vel_pub.publish(-1300)
                 self.ste_pub.publish(2000)
         elif self.loss_line_temp == 5:
-            print(self.position(self.mag_ss_front))
+            #print(self.position(self.mag_ss_front))
             if self.position(self.mag_ss_front) > 6 and self.position(self.mag_ss_front) < 10 and self.no_line_flag_front == 0 :
             #ssif self.position(self.mag_ss_front) > 3 and self.position(self.mag_ss_front) < 15 and self.no_line_flag_front == 0 :
                 self.vel_pub.publish(0)
@@ -673,7 +641,7 @@ class line_follow():
                 self.count_lane = 2
                 self.loss_line_temp = 0
             else:
-                print(((self.last_encoder_1) + (self.t_enc)))
+                #print(((self.last_encoder_1) + (self.t_enc)))
                 self.vel_pub.publish(-1000)  #left
                 self.ste_pub.publish(2000)
     
@@ -698,7 +666,7 @@ class line_follow():
                 else:
                     self.vel_pub.publish(0)
                     self.ste_pub.publish(5200)
-                print "Can not find lane to run "                
+                #print "Can not find lane to run "                
             else:
                 if self.temp_2 == 0:
                     self.count += 1
@@ -737,7 +705,7 @@ class line_follow():
                                 if self.balance_flag == 1:
                                     if self.turn_flag == 0:
                                         if self.pos_left == 1:
-                                            #print " move from the left",pos,self.count_magss
+                                            ##print " move from the left",pos,self.count_magss
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.turn_flag = 1
                                                 self.temp_1 = 1
@@ -756,7 +724,7 @@ class line_follow():
                                                     else:
                                                         self.loss_line_temp_3 = 0 
                                         elif self.pos_right == 1:
-                                            #print "move from the right",pos,self.count_magss
+                                            ##print "move from the right",pos,self.count_magss
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.vel_pub.publish(-1000)
                                                 self.ste_pub.publish(self.home_value)
@@ -776,8 +744,8 @@ class line_follow():
                                                         self.loss_line_temp_3 = 0 
                                     elif self.turn_flag == 1:
                                         if self.temp_1 == 1 :
-                                            #print (self.now_encoder) + (self.t_enc)
-                                            #print "time = ",self.time,"bug here 2"
+                                            ##print (self.now_encoder) + (self.t_enc)
+                                            ##print "time = ",self.time,"bug here 2"
                                             if ((self.now_encoder) + (self.t_enc)) <= (self.time ) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
@@ -786,8 +754,8 @@ class line_follow():
                                                 self.vel_pub.publish(-1000)  #left
                                                 self.ste_pub.publish(8300)
                                         elif self.temp_1 == 2:
-                                            #print (self.now_encoder) + (self.t_enc)
-                                            #print "time = ",self.time,"bug here 1"
+                                            ##print (self.now_encoder) + (self.t_enc)
+                                            ##print "time = ",self.time,"bug here 1"
                                             if ((self.now_encoder) + (self.t_enc)) <= (self.time ) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
@@ -798,7 +766,7 @@ class line_follow():
                                 else:
                                     self.flag = 0
                                     self.angle_controll(-1150)  
-                                    print("self.lane_count = ",self.lane_count)
+                                    #print("self.lane_count = ",self.lane_count)
                                     if self.count_magss > 9 and self.loss_line_temp_3 == 0  :
                                         self.lane_count += 1
                                         self.loss_line_temp_3 = 1
@@ -811,13 +779,13 @@ class line_follow():
 #                                #self.vel_pub.publish(0)
 #                                #self.ste_pub.publish(5200)
 #                                self.stop_encoder = -(self.t_enc)
-#                                print "stop_encoder = ",self.stop_encoder
+#                                #print "stop_encoder = ",self.stop_encoder
 #                                self.take_pallet = 2
 #                                self.pos_stop = 0
 #                            else:
 #                                self.flag = 0
 #                                self.angle_controll(-1150)  
-#                                print("self.lane_count = ",self.lane_count)
+#                                #print("self.lane_count = ",self.lane_count)
 #                                if self.count_magss > 9 and self.loss_line_temp_3 == 0  :
 #                                    self.lane_count += 1
 #                                    self.loss_line_temp_3 = 1
@@ -865,14 +833,14 @@ class line_follow():
                         elif self.take_pallet == 5:
                             if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
                                 self.stop_encoder = -(self.t_enc)
-                                #print "stop_encoder = ",self.stop_encoder
+                                ##print "stop_encoder = ",self.stop_encoder
                                 self.take_pallet = 6
                                 #self.pos_stop = 0
                             else:
                                 if self.balance_flag == 1:
                                     if self.turn_flag == 0:
                                         if self.pos_left == 1:
-                                            #print " move from the left",pos,self.count_magss
+                                            ##print " move from the left",pos,self.count_magss
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.turn_flag = 1
                                                 self.temp_1 = 1
@@ -883,7 +851,7 @@ class line_follow():
                                                 self.temp = self.temp + 1
                                                 self.angle_controll(-1100)
                                         elif self.pos_right == 1:
-                                            #print "move from the right",pos,self.count_magss
+                                            ##print "move from the right",pos,self.count_magss
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.vel_pub.publish(-1000)
                                                 self.ste_pub.publish(self.home_value)
@@ -895,8 +863,8 @@ class line_follow():
                                                 self.angle_controll(-1100)
                                     elif self.turn_flag == 1:
                                         if self.temp_1 == 1 :
-                                            #print (self.now_encoder) + (self.t_enc)
-                                            #print "time = ",self.time,"bug here 2"
+                                            ##print (self.now_encoder) + (self.t_enc)
+                                            ##print "time = ",self.time,"bug here 2"
                                             if ((self.now_encoder) + (self.t_enc)) <= (self.time + 15) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
@@ -905,8 +873,8 @@ class line_follow():
                                                 self.vel_pub.publish(-1000)  #left
                                                 self.ste_pub.publish(8300)
                                         elif self.temp_1 == 2:
-                                            #print (self.now_encoder) + (self.t_enc)
-                                            #print "time = ",self.time,"bug here 1"
+                                            ##print (self.now_encoder) + (self.t_enc)
+                                            ##print "time = ",self.time,"bug here 1"
                                             if ((self.now_encoder) + (self.t_enc)) <= (self.time + 15) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
@@ -917,7 +885,7 @@ class line_follow():
                                 else:
                                     self.flag = 0
                                     self.angle_controll(-1150)  
-                                    #print("self.lane_count = ",self.lane_count)
+                                    ##print("self.lane_count = ",self.lane_count)
                                     if self.count_magss > 9 and self.loss_line_temp_4 == 0  :
                                         self.lane_count_ += 1
                                         self.loss_line_temp_4 = 1
@@ -930,13 +898,13 @@ class line_follow():
 #                                #self.vel_pub.publish(0)
 #                                #self.ste_pub.publish(5200)
 #                                self.stop_encoder = -(self.t_enc)
-#                                #print "stop_encoder = ",self.stop_encoder
+#                                ##print "stop_encoder = ",self.stop_encoder
 #                                self.take_pallet = 6
 #                                self.pos_stop = 0
 #                            else:
 #                                self.flag = 0
 #                                self.angle_controll(-1150)  
-#                                #print("self.lane_count = ",self.lane_count)
+#                                ##print("self.lane_count = ",self.lane_count)
 #                                if self.count_magss > 9 and self.loss_line_temp_4 == 0  :
 #                                    self.lane_count_ += 1
 #                                    self.loss_line_temp_4 = 1
@@ -1010,7 +978,7 @@ class line_follow():
                             else:
                                 self.angle_controll_front(1250)
                         elif self.take_pallet == 10:
-                            print("encoder_1212 = ",((self.last_encoder_2) + (self.t_enc)))
+                            #print("encoder_1212 = ",((self.last_encoder_2) + (self.t_enc)))
                             if self.count_magss > 9:
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
@@ -1085,7 +1053,7 @@ class line_follow():
                             self.take_pallet = 18
                         elif self.take_pallet == 18:
                             self.flag_2 = 1
-                            #print("encoder_here",((self.last_encoder_1) + (self.t_enc)))
+                            ##print("encoder_here",((self.last_encoder_1) + (self.t_enc)))
                             if ((self.last_encoder_1) + (self.t_enc)) < -1700:
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
@@ -1105,8 +1073,8 @@ class line_follow():
                                 self.PID_enable = 2
                                 self.take_pallet = 20
                     elif self.temp_1 == 1  and self.flag == 1  and self.stop_flag == 0:
-                        print (self.now_encoder) + (self.t_enc)
-                        print "time = ",self.time,"bug here 2"
+                        #print (self.now_encoder) + (self.t_enc)
+                        #print "time = ",self.time,"bug here 2"
                         if ((self.now_encoder) + (self.t_enc)) <= self.time :
                             self.stop_flag = 1
                             self.temp_1 = 0
@@ -1118,16 +1086,16 @@ class line_follow():
                         for i in range(10):
                             self.vel_pub.publish(-650)
                             self.ste_pub.publish(800)
-                        print('Before: %s' ,self.t_enc)
+                        #print('Before: %s' ,self.t_enc)
                         time.sleep(self.time)
-                        print(self.time)
-                        print('After: %s\n' ,self.t_enc)
+                        #print(self.time)
+                        #print('After: %s\n' ,self.t_enc)
                         self.stop_flag = 1
                         self.temp_1 = 0
                         """
                     elif self.temp_1 == 2 and self.flag == 2 and self.stop_flag == 0:
-                        print (self.now_encoder) + (self.t_enc)
-                        print "time = ",self.time,"bug here 1"
+                        #print (self.now_encoder) + (self.t_enc)
+                        #print "time = ",self.time,"bug here 1"
                         if ((self.now_encoder) + (self.t_enc)) <= self.time :
                             self.stop_flag = 1
                             self.temp_1 = 0
@@ -1139,10 +1107,10 @@ class line_follow():
                         for i in range(10):
                             self.vel_pub.publish(-600)
                             self.ste_pub.publish(300)
-                        print('Before: %s',self.t_enc)
-                        print(self.time)
+                        #print('Before: %s',self.t_enc)
+                        #print(self.time)
                         time.sleep(self.time)
-                        print('After: %s\n', self.t_enc)
+                        #print('After: %s\n', self.t_enc)
                         self.stop_flag = 1
                         self.temp_1 = 0
                         """
@@ -1159,10 +1127,10 @@ class line_follow():
                                 self.temp_1 = 1
                                 self.flag = 1
                                 #self.pos_stop = 0   
-                        #print " move from the left",pos,self.count_magss
+                        ##print " move from the left",pos,self.count_magss
                         else:
                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
-                                print "self.temp = ",self.temp
+                                #print "self.temp = ",self.temp
                                 self.temp_1 = 1
                                 self.flag = 1
                                 self.vel_pub.publish(-1000)#21h-11/12/2017
@@ -1195,9 +1163,9 @@ class line_follow():
                                 self.temp_1 = 2
                                 self.flag = 2
                                 #self.pos_stop = 0   
-                        #print " move from the left",pos,self.count_magss
+                        ##print " move from the left",pos,self.count_magss
                         else:
-                            #print "move from the right",pos,self.count_magss
+                            ##print "move from the right",pos,self.count_magss
                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                 self.vel_pub.publish(-1000)
                                 self.ste_pub.publish(self.home_value)
@@ -1241,8 +1209,8 @@ class line_follow():
                     self.status = 3
                 else:
                     self.vel_pub.publish(0)
-                    self.ste_pub.publish(5200)
-                print "Can not find lane to run "
+                    self.ste_pub.publish(self.home_value)
+                #print "Can not find lane to run "
                 
             else:
                 #pos = self.position(self.mag_ss)
@@ -1258,15 +1226,41 @@ class line_follow():
 #                            self.take_pallet = 1
 #                    else:
 #                        self.take_pallet = 1
-                    
                 elif self.take_pallet == 1:
-                    if self.cross_front_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
-                        self.stop_encoder = -(self.t_enc)
+                    if self.count_front_magss == 0:
+                        self.now_encoder = -(self.t_enc)
                         self.take_pallet = 2
                     else:
                         self.flag = 0
+                        self.angle_controll_front(1100)
+                elif self.take_pallet == 2:
+                    if ((self.now_encoder) + (self.t_enc)) > 500:
+                        for i in range(15):
+                            self.vel_pub.publish(0)
+                            self.ste_pub.publish(self.home_value)
+                        self.take_pallet = 3
+                    else:
+                        self.vel_pub.publish(1100)
+                        self.ste_pub.publish(self.home_value)
+                elif self.take_pallet == 3:
+                    for i in range(15):
+                        self.vel_pub.publish(0)
+                        self.ste_pub.publish(2000)
+                        self.take_pallet = 4
+                elif self.take_pallet == 4:
+                    if self.position(self.mag_ss_front) > 6 and self.position(self.mag_ss_front) < 10 and self.no_line_flag_front == 0 :
+                        self.take_pallet = 5
+                    else:
+                        self.vel_pub.publish(1100)
+                        self.ste_pub.publish(2000)
+                elif self.take_pallet == 5:
+                    if self.cross_front_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
+                        self.stop_encoder = -(self.t_enc)
+                        self.take_pallet = 6
+                    else:
+                        self.flag = 0
                         self.angle_controll_front(1100)  
-                        print("self.lane_count = ",self.lane_count)
+                        #print("self.lane_count = ",self.lane_count)
                         if self.count_front_magss > 10 and self.loss_line_temp_3 == 0  :
                             self.lane_count += 1
                             self.loss_line_temp_3 = 1
@@ -1275,48 +1269,54 @@ class line_follow():
                                 pass
                             else:
                                 self.loss_line_temp_3 = 0
-                elif self.take_pallet == 2:
+                elif self.take_pallet == 6:
                     self.count_2 = self.count_2 + 1
                     if self.count_2 > 20:
                         self.vel_pub.publish(0)
                         self.ste_pub.publish(self.home_value)
-                        self.take_pallet = 3
+                        self.take_pallet = 7
                         self.program_pub.publish(3205)
                     else:
                         self.vel_pub.publish(0)
                         self.ste_pub.publish(self.home_value)
-                elif self.take_pallet == 3:
+                elif self.take_pallet == 7:
                     if self.charger_ready == 1:
-                        self.take_pallet = 4
+                        self.take_pallet = 8
                     else:
                         self.PID_enable = 2
-                elif self.take_pallet == 4:
+                elif self.take_pallet == 8:
                     self.count_4 += 1
                     if self.count_4 > 20:
                         self.count_3 = self.t_enc
-                        self.take_pallet = 5
+                        self.take_pallet = 9
                     else:
                         self.count_6 = self.t_enc
                         self.vel_pub.publish(0)
                         self.ste_pub.publish(8300)
                             
-                elif self.take_pallet == 5:
+                elif self.take_pallet == 9:
                     if self.mag_right_value == 0:
 #                           self.vel_pub.publish(0)
 #                           self.ste_pub.publish(8300)
-                        self.take_pallet = 6
-                        print "encoder = ",self.t_enc - self.count_3
+                        self.take_pallet = 10
+                        #print "encoder = ",self.t_enc - self.count_3
                     else:
                         self.vel_pub.publish(1000)
                         self.ste_pub.publish(8300)
-                elif self.take_pallet == 6:
+                elif self.take_pallet == 10:
                     for i in range (30):
                         self.vel_pub.publish(0)
                         self.ste_pub.publish(8300)
-                    self.take_pallet = 7
-                elif self.take_pallet == 7:
+                    self.take_pallet = 11
+                elif self.take_pallet == 11:
                     self.program_pub.publish(3206)
+                    self.take_pallet = 12
                     self.PID_enable = 2
+                elif self.take_pallet == 8:
+                    if self.turn_off_pc_flag == 1:
+                        self.charge_cmd.publish(5000)
+                    else:
+                        pass
         else :
             self.count_lane = 2
             self.loss_line_flag = 1
@@ -1445,6 +1445,7 @@ class line_follow():
                 self.flag_2 = 0
                 self.lane_count = 0
                 self.lane_count_ = 0
+                self.turn_off_pc_flag        = 0
                 self.no_line_flag = 0
                 #self.lane_to_turn_ = 2
                 self.lane_to_turn            = None
@@ -1491,8 +1492,9 @@ class line_follow():
                         self.count_8 += 1
                 elif self.flag_laser == 2:
                     self.moving_out_charger()
-            elif self.PID_enable == 0:             
-                print ' Waiting... '
+            elif self.PID_enable == 0:  
+                pass
+                #print ' Waiting... '
             r.sleep()
 if __name__ == '__main__':
     run = line_follow()
