@@ -1,3 +1,11 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jan 31 21:33:28 2019
+
+@author: dongho
+"""
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
@@ -104,8 +112,6 @@ class line_follow():
         self.balance_flag            = 0
         self.dir_main_temp           = 0
         self.dir_main_count          = 0
-        self.encoder_for_stop        = 0
-        self.last_encoder_for_stop   = 0
         #self.lane_to_turn = 1
         #self.lane_to_turn_ = 2
         self.charger_ready           = 0
@@ -703,10 +709,8 @@ class line_follow():
                         if self.take_pallet == 0:
                             if self.has_sub_line == "yes":
                                 self.take_pallet = 1
-                                self.last_encoder_for_stop = -(self.t_enc)
                             else:
                                 self.take_pallet = 5
-                                self.last_encoder_for_stop = -(self.t_enc)
                             ##########uncomment here when release#######
                             #if self.lift_val == 1 or self.lift_val == 0:
                             #    self.vel_pub.publish(0)
@@ -721,7 +725,6 @@ class line_follow():
                         elif self.take_pallet == 1:
                             if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
                                 self.stop_encoder = -(self.t_enc)
-                                self.encoder_for_stop = -((self.last_encoder_for_stop) + (self.t_enc))
                                 self.take_pallet = 2
                                 #self.pos_stop = 0
                             else:
@@ -856,7 +859,6 @@ class line_follow():
                         elif self.take_pallet == 5:
                             if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
                                 self.stop_encoder = -(self.t_enc)
-                                self.encoder_for_stop = -((self.last_encoder_for_stop) + (self.t_enc))
                                 ##print "stop_encoder = ",self.stop_encoder
                                 self.take_pallet = 6
                                 #self.pos_stop = 0
@@ -974,7 +976,6 @@ class line_follow():
                                     if self.lift_val == 1:
                                         self.lift_pub.publish("lift_stop")
                                         self.take_pallet = 16
-                                        self.last_encoder_for_stop = -(self.t_enc)
                                         self.program_pub.publish(3203)
                                     else:
                                         self.lift_pub.publish("lift_up")
@@ -985,7 +986,6 @@ class line_follow():
                                     if self.lift_val == 2:
                                         self.lift_pub.publish("lift_stop")
                                         self.program_pub.publish(3204)
-                                        self.last_encoder_for_stop = -(self.t_enc)
                                         self.take_pallet = 16
                                     else:
                                         self.lift_pub.publish("lift_down")
@@ -1058,24 +1058,31 @@ class line_follow():
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
                                 self.take_pallet = 16
-                                self.last_encoder_for_stop = -(self.t_enc)
                             else:
                                 self.vel_pub.publish(1000)
                                 self.ste_pub.publish(2000)
                         elif self.take_pallet == 16:
-                            if ((self.last_encoder_for_stop) + (self.t_enc)) >= self.encoder_for_stop:
-                                self.vel_pub.publish(0)
-                                self.ste_pub.publish(self.home_value)
-                                self.take_pallet = 17
-                            else:
-                                if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
-                                    self.vel_pub.publish(1250)
+                            if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
+                                if self.has_sub_line == "yes":
+                                    self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
+                                    self.take_pallet = 17
                                 else:
-                                    self.angle_controll_front(1250)
+                                    if self.loss_line_temp_6 == 0:
+                                        self.last_encoder_1 = -(self.t_enc)
+                                        self.loss_line_temp_6 = 1
+                                    elif self.loss_line_temp_6 == 1:
+                                        if ((self.last_encoder_1) + (self.t_enc)) > 1300:
+                                            self.take_pallet = 17
+                                            self.loss_line_temp_6 = 0
+                                        else:
+                                            self.vel_pub.publish(1250)
+                                            self.ste_pub.publish(self.home_value)
+                            else:
+                                self.angle_controll_front(1300)
                         elif self.take_pallet == 17:
                             self.flag_2 = 1
-                            for i in range(30):
+                            for i in range(10):
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
                             self.last_encoder_1 = -(self.t_enc)
@@ -1470,8 +1477,6 @@ class line_follow():
                 self.no_line_flag           = 0
                 self.dir_main_temp          = 0
                 self.dir_main_count         = 0
-                self.encoder_for_stop       = 0
-                self.last_encoder_for_stop  = 0
                 #self.lane_to_turn_ = 2
                 self.lane_to_turn           = 0
                 self.has_sub_line           = None
