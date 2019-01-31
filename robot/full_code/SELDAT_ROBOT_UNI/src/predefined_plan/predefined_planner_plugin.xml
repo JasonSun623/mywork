@@ -1,0 +1,7 @@
+<!----->
+<library path="lib/libpp_lib">
+ <class name="PP_planner/PP_PlannerROS" type="PP_planner::PP_PlannerROS" base_class_type="nav_core::BaseGlobalPlanner">
+   <description>This is PP global planner plugin.</description>
+ </class>
+</library>
+

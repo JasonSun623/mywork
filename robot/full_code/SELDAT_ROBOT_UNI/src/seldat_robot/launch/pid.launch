@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<node name="traction_wheel" pkg="pid" type="controller" output="screen">
+		
+      		<param name="Kp" value="1000.0" />
+      		<param name="Ki" value="1000.0" />
+      		<param name="Kd" value="10" />
+      		
+		<param name="upper_limit" value="4000"/>
+      		<param name="lower_limit" value="0" />
+     	 	<param name="windup_limit" value="4000" />
+      		<param name="diagnostic_period" value="0.25" />
+      		<param name="max_loop_frequency" value="10.0" />
+      		<param name="min_loop_frequency" value="10.0" />
+      		<remap from="setpoint" to="/fwheel_vtarget" />
+		<remap from="control_effort" to="/twheel"/>
+		<remap from="state" to="/t_vel"/>
+     	</node>
+
+</launch>

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+
+mono /home/seldat/seldat_robot/Debug/guigui.exe

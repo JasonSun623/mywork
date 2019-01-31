@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+
+<launch>
+	<!--Setup-->
+	<!--<arg name="model" /> default="/home/seldat/seldat_robot/src/seldat_robot/urdf/robot_seldat_v5.urdf" /> -->
+	<arg name="gui" default="False" />
+	<!--<param name="robot_description" textfile="$(arg model)" /> -->
+	<param name="robot_description" command="$(find xacro)/xacro '$(find seldat_robot)/urdf/robot_seldat_v5.xacro'" />
+
+	<param name="use_gui" value="$(arg gui)"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" > </node>
+	
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+		<param name="publish_frequency" type="double" value="50.0" />
+	</node>
+
+<!--	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find urdf_tutorial)/urdf.rviz" required="true" /> -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find seldat_robot)/rviz/robot.rviz" required="true" />
+  	
+	<!--laser-->
+	<!--<node pkg="sicktoolbox_wrapper" type="sicklms" name="sicklms" >
+		<param name="port" value="/dev/SICK_LMS200" />
+		<param name="baud" value="38400" />
+		<param name="angle" value="180" />
+		<param name="resolution" value="1.0" />
+		<param name="units" value="cm" />
+	</node>
+	-->
+	<!--<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+  		<param name="output_frame" value="odom_combined"/>
+  		<param name="base_footprint_frame" value="base_footprint"/>
+  		<param name="freq" value="50.0"/>
+  		<param name="sensor_timeout" value="1.0"/>  
+  		<param name="odom_used" value="true"/>
+  		<param name="imu_used" value="true"/>
+  		<param name="vo_used" value="false"/>
+  		<remap from="odom" to="pr2_base_odometry/odom" />
+	</node>-->
+	
+	<!--
+  	<node pkg="tf" type="static_transform_publisher" name="base_link_2_imu_link" args="0.87 0 0.8 0 0 0 /base_link /imu 100"/>
+ 	<node pkg="tf" type="static_transform_publisher" name="odom_2_odom_combined" args="0 0 0 0 0 0 /odom /odom_combined 100"/>
+	<node pkg="tf" type="static_transform_publisher" name="odom_2_odom_encoder" args="0 0 0 0 0 0 /odom /odom_encoder 100"/>
+	-->
+ 
+  <!--  Global Parameters
+	<param name="/use_sim_time" value="true"/>
+-->	
+  <!-- Run the map server -->
+   <node name="map_server" pkg="map_server" type="map_server" args="$(find seldat_robot)/maps/mymap.yaml" output="screen"/>
+
+  <!-- Run AMCL -->
+  <!--<include file="$(find amcl)/examples/amcl_diff.launch" >-->
+  <include file="$(find seldat_robot)/launch/amcl.launch" />  <!--custom amcl-->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="log">
+    <rosparam file="$(find seldat_robot)/param/move_base_params.yaml" command="load" />
+    <rosparam file="$(find seldat_robot)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find seldat_robot)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find seldat_robot)/param/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find seldat_robot)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find seldat_robot)/param/base_local_planner_params.yaml" command="load" />
+<!-- 
+	<rosparam file="$(find seldat_robot)/param/move_base_params.yaml" command="load" />
+-->
+    <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS"/>
+<!--
+    <param name="base_global_planner" value="PP_planner/PP_PlannerROS"/>
+-->
+    <param name="base_global_planner" value="global_planner/GlobalPlanner"/>
+<!--
+    <param name="base_global_planner" value="RAstar_planner/RAstarPlannerROS"/> i
+-->
+    <remap from="cmd_vel" to="/cmd_vel_mux/input/navi"/>
+  </node>
+</launch>
