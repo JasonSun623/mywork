@@ -243,6 +243,7 @@ class line_follow():
         self.dir_sub        = dict_data["dir_sub"]
         self.lane_to_turn_  = dict_data["row"] + 1
         self.dir_out        = dict_data["dir_out"] + 1
+        print(dict_data)
         if self.pallet == 2:
             self.PID_enable = 3
         else:
