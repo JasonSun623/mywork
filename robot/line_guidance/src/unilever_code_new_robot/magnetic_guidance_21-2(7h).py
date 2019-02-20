@@ -866,10 +866,7 @@ class line_follow():
                                     else:
                                         self.loss_line_temp_3 = 0
                                         self.flag = 0
-                                        if self.lane_count == self.lane_to_turn - 1:
-                                            self.angle_controll(-1150)
-                                        else:
-                                            self.angle_controll(-1350)  
+                                        self.angle_controll(-1350)  
 #                                        print("111111111",self.loss_line_temp_3)
 #                                        print("self.lane_count_111111111 = ",self.lane_count)   
                                     if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done

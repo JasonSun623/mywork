@@ -464,10 +464,10 @@ class line_follow():
         #print "speed",speed, "angle",self.angle#,"pos",pos
         self.vel_pub.publish(speed)
         self.ste_pub.publish(self.angle)
-        if pos >= 14:
+        if pos == 16:
             self.balance_flag = 1
             self.timer(pos,self.loss_line_flag_1)
-        elif pos <= 3:
+        elif pos == 1:
             self.balance_flag = 1
             self.timer(pos,self.loss_line_flag_1)
         else:
@@ -729,12 +729,17 @@ class line_follow():
                             #    self.take_pallet = 1
                             
                         elif self.take_pallet == 1:
-                            print("take_pallet == 1",self.lane_count)
+#                            if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
+#                                self.lane_count += 1
+#                                self.loss_line_temp_3 = 1
+#                            elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
+#                                pass
+#                            else:
+#                                self.loss_line_temp_3 = 0 
+                            print("self.take_pallet == 1",self.lane_count)
                             if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
                                 self.stop_encoder = -(self.t_enc)
-                                ##print "stop_encoder = ",self.stop_encoder
                                 self.take_pallet = 2
-                                self.turn_flag = 0
                                 #self.pos_stop = 0
                             else:
                                 if self.balance_flag == 1:
@@ -745,8 +750,12 @@ class line_follow():
                                                 self.loss_line_temp_3 = 1
                                             elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                 pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                             else:
-                                                self.loss_line_temp_3 = 0
+                                                self.loss_line_temp_3 = 0 
                                             ##print " move from the left",pos,self.count_magss
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.turn_flag = 1
@@ -754,138 +763,158 @@ class line_follow():
                                                 self.vel_pub.publish(-1000)#21h-11/12/2017
                                                 self.ste_pub.publish(self.home_value)
                                                 self.now_encoder = -self.t_enc
-                                                self.loss_line_temp_3 = 0
+                                                self.loss_line_temp_3 = 0 
                                             else:
                                                 if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                                     self.lane_count += 1
                                                     self.loss_line_temp_3 = 1
                                                 elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                     pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                                 else:
-                                                    self.loss_line_temp_3 = 0
+                                                    self.loss_line_temp_3 = 0 
                                                     #self.temp = self.temp + 1
                                                     self.angle_controll(-1200)
-                                                    print("111111111")
                                             if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
-                                                #self.stop_encoder = -(self.t_enc)
-                                                ##print "stop_encoder = ",self.stop_encoder
                                                 self.take_pallet = 2
-                                                self.turn_flag = 0
                                         elif self.pos_right == 1:
+                                            ##print "move from the right",pos,self.count_magss
                                             if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                                 self.lane_count += 1
                                                 self.loss_line_temp_3 = 1
                                             elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                 pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                             else:
-                                                self.loss_line_temp_3 = 0
-                                                    #self.temp = self.temp + 1
-                                            ##print "move from the right",pos,self.count_magss
+                                                self.loss_line_temp_3 = 0 
                                             if pos == 8 and self.count_magss < 8 and self.line_flag == 0:
                                                 self.vel_pub.publish(-1000)
                                                 self.ste_pub.publish(self.home_value)
                                                 self.temp_1 = 2
                                                 self.turn_flag = 1
                                                 self.now_encoder = -self.t_enc
-                                                self.loss_line_temp_3 = 0
+                                                self.loss_line_temp_3 = 0 
                                             else:
                                                 if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                                     self.lane_count += 1
                                                     self.loss_line_temp_3 = 1
                                                 elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                     pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                                 else:
-                                                    self.loss_line_temp_3 = 0
+                                                    self.loss_line_temp_3 = 0 
                                                     #self.temp = self.temp + 1
                                                     self.angle_controll(-1200)
-                                                    print("111111111")
                                             if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
-                                                #self.stop_encoder = -(self.t_enc)
-                                                ##print "stop_encoder = ",self.stop_encoder
                                                 self.take_pallet = 2
-                                                self.turn_flag = 0
                                     elif self.turn_flag == 1:
                                         if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                             self.lane_count += 1
                                             self.loss_line_temp_3 = 1
                                         elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
-                                            print("okokok")
                                             pass
                                         else:
-                                            self.loss_line_temp_3 = 0
+                                            self.loss_line_temp_3 = 0 
+                                        print("self.take_pallet == 1",self.lane_count)
                                         if self.temp_1 == 1 :
                                             if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                                 self.lane_count += 1
                                                 self.loss_line_temp_3 = 1
                                             elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                 pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                             else:
-                                                self.loss_line_temp_3 = 0
+                                                self.loss_line_temp_3 = 0 
                                             ##print (self.now_encoder) + (self.t_enc)
                                             ##print "time = ",self.time,"bug here 2"
-                                            if ((self.now_encoder) + (self.t_enc)) <= (self.time + 15) :
+                                            if ((self.now_encoder) + (self.t_enc)) <= (self.time ) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
                                                 self.turn_flag = 0
-                                                self.loss_line_temp_3 = 0
                                             else:
-                                                self.loss_line_temp_3 = 0
                                                 self.vel_pub.publish(-1000)  #left
                                                 self.ste_pub.publish(8300)
+                                            if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
+                                                self.take_pallet = 2
                                         elif self.temp_1 == 2:
                                             if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
-                                                self.lane_count_ += 1
+                                                self.lane_count += 1
                                                 self.loss_line_temp_3 = 1
                                             elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
                                                 pass
+#                                                    if self.count_magss > 11:
+#                                                        pass
+#                                                    else:
+#                                                        self.loss_line_temp_3 = 0 
                                             else:
-                                                self.loss_line_temp_3 = 0
+                                                self.loss_line_temp_3 = 0 
                                             ##print (self.now_encoder) + (self.t_enc)
                                             ##print "time = ",self.time,"bug here 1"
-                                            if ((self.now_encoder) + (self.t_enc)) <= (self.time + 15) :
+                                            if ((self.now_encoder) + (self.t_enc)) <= (self.time ) :
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
                                                 self.turn_flag = 0
-                                                self.loss_line_temp_3 = 0
                                             else:
-                                                self.loss_line_temp_3 = 0
                                                 self.vel_pub.publish(-1000)  #right
                                                 self.ste_pub.publish(2000)
-                                        if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
-                                            self.stop_encoder = -(self.t_enc)
-                                            ##print "stop_encoder = ",self.stop_encoder
-                                            self.take_pallet = 2
-                                            self.turn_flag = 0
-                                else:          
+                                            if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
+                                                self.take_pallet = 2
+                                else:
+                                    
+                                    #print("self.lane_count = ",self.lane_count)
                                     if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
                                         self.lane_count += 1
                                         self.loss_line_temp_3 = 1
                                     elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
-                                        print("okokok")
                                         pass
+#                                        if self.count_magss > 11:
+#                                            pass
+#                                        else:
+#                                            self.loss_line_temp_3 = 0   
                                     else:
-                                        self.loss_line_temp_3 = 0
+                                        self.loss_line_temp_3 = 0 
                                         self.flag = 0
-                                        if self.lane_count == self.lane_to_turn - 1:
-                                            self.angle_controll(-1150)
-                                        else:
-                                            self.angle_controll(-1350)  
-#                                        print("111111111",self.loss_line_temp_3)
-#                                        print("self.lane_count_111111111 = ",self.lane_count)   
-                                    if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
-                                        self.stop_encoder = -(self.t_enc)
-                                        ##print "stop_encoder = ",self.stop_encoder
-                                        self.take_pallet = 2
-                                        self.turn_flag = 0
+                                        self.angle_controll(-1200)  
+#                            if self.cross_detect == 1 and self.lane_count == self.lane_to_turn:# and self.pos_stop == 1 :#uncomment here when done
+#                                #self.vel_pub.publish(0)
+#                                #self.ste_pub.publish(5200)
+#                                self.stop_encoder = -(self.t_enc)
+#                                #print "stop_encoder = ",self.stop_encoder
+#                                self.take_pallet = 2
+#                                self.pos_stop = 0
+#                            else:
+#                                self.flag = 0
+#                                self.angle_controll(-1200)  
+#                                #print("self.lane_count = ",self.lane_count)
+#                                if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
+#                                    self.lane_count += 1
+#                                    self.loss_line_temp_3 = 1
+#                                if self.loss_line_temp_3 == 1:
+#                                    if self.count_magss > 11:
+#                                        pass
+#                                    else:
+#                                        self.loss_line_temp_3 = 0                                     
                         elif self.take_pallet == 2:
                             print("here333333333333")
                             self.flag_2 = 1
                             self.count_2 = self.count_2 + 1
                             if self.dir_sub == 1:
-                                if self.count_2 >= 1 and self.count_2 < 3 :
+                                if self.count_2 >= 15 and self.count_2 < 50 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
-                                elif self.count_2 >= 3 and self.count_2 < 10 :
+                                elif self.count_2 >= 50 and self.count_2 < 80 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 3
@@ -899,7 +928,7 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                 elif self.count_2 >= 3 and self.count_2 < 25 :
-                                    self.vel_pub.publish(1350)
+                                    self.vel_pub.publish(1250)
                                     self.ste_pub.publish(self.home_value)
                                 elif self.count_2 >= 25 and self.count_2 < 50 :
                                     self.vel_pub.publish(0)
@@ -1070,9 +1099,7 @@ class line_follow():
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
                                                 self.turn_flag = 0
-                                                self.loss_line_temp_4 = 0
                                             else:
-                                                self.loss_line_temp_4 = 0
                                                 self.vel_pub.publish(-1000)  #left
                                                 self.ste_pub.publish(8300)
                                         elif self.temp_1 == 2:
@@ -1093,9 +1120,7 @@ class line_follow():
                                                 self.temp_1 = 0
                                                 self.balance_flag = 0
                                                 self.turn_flag = 0
-                                                self.loss_line_temp_4 = 0
                                             else:
-                                                self.loss_line_temp_4 = 0
                                                 self.vel_pub.publish(-1000)  #right
                                                 self.ste_pub.publish(2000)
                                         if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
@@ -1368,10 +1393,10 @@ class line_follow():
                             if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
                                 self.take_pallet = 18
                             else:
-                                self.angle_controll_front(1650)
+                                self.angle_controll_front(1350)
                         elif self.take_pallet == 18:
                             self.count_10 += 1
-                            if self.count_10 >= 15:
+                            if self.count_10 >= 30:
                                 if self.has_sub_line == "yes":
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
