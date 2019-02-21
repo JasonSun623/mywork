@@ -113,8 +113,6 @@ class line_follow():
         self.has_sub_line            = None
         self.dir_main                = None
         self.dir_sub                 = None
-        self.line_ord                = 0
-        self.line_ord_count          = 0
         self.lane_to_turn_           = 0
         self.dir_out                 = 0
         self.count_10                = 0 
@@ -238,7 +236,6 @@ class line_follow():
         self.dir_sub        = dict_data["dir_sub"]
         self.lane_to_turn_  = dict_data["row"] + 1
         self.dir_out        = dict_data["dir_out"] + 1
-        self.line_ord       = dict_data["line_ord"] + 1
         if dict_data["hasSubLine"] == "yes" and dict_data["dir_sub"] == 1:
             if dict_data["bay"] == 0:
                 self.lane_to_turn = (dict_data["bay"] + 2)
@@ -544,55 +541,16 @@ class line_follow():
             self.loss_line_temp = 1
         elif self.loss_line_temp == 1:
             #print ((self.last_encoder) + (self.t_enc))
-            if self.has_sub_line == "no" and self.line_ord == 1:
-                if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 2
-                    self.loss_line_temp_3 = 0 
-                else:
-                    if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
-                        self.line_ord_count += 1
-                        self.loss_line_temp_3 = 1
-                    elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
-                        pass
-                    else:
-                        self.loss_line_temp_3 = 0 
-                    self.vel_pub.publish(-1100)
+            if self.count_magss > 3 :
+                self.loss_line_temp = 2
+            elif ((self.last_encoder) + (self.t_enc)) < -1500 :
+                for i in range(30):
+                    self.vel_pub.publish(0)
                     self.ste_pub.publish(self.home_value)
-                if ((self.last_encoder) + (self.t_enc)) < -1500 :
-                    for i in range(30):
-                        self.vel_pub.publish(0)
-                        self.ste_pub.publish(self.home_value)
-                    self.PID_enable = 2
-            elif self.has_sub_line == "no" and self.line_ord == 2:
-                if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 2
-                    self.loss_line_temp_3 = 0 
-                else:
-                    if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
-                        self.line_ord_count += 1
-                        self.loss_line_temp_3 = 1
-                    elif self.count_magss > 11 and self.loss_line_temp_3 == 1:
-                        pass
-                    else:
-                        self.loss_line_temp_3 = 0 
-                    self.vel_pub.publish(-1100)
-                    self.ste_pub.publish(self.home_value)
-                if ((self.last_encoder) + (self.t_enc)) < -1500 :
-                    for i in range(30):
-                        self.vel_pub.publish(0)
-                        self.ste_pub.publish(self.home_value)
-                    self.PID_enable = 2
+                self.PID_enable = 2
             else:
-                if self.count_magss > 3 :
-                    self.loss_line_temp = 2
-                elif ((self.last_encoder) + (self.t_enc)) < -1500 :
-                    for i in range(30):
-                        self.vel_pub.publish(0)
-                        self.ste_pub.publish(self.home_value)
-                    self.PID_enable = 2
-                else:
-                    self.vel_pub.publish(-1100)
-                    self.ste_pub.publish(self.home_value)
+                self.vel_pub.publish(-1100)
+                self.ste_pub.publish(self.home_value)
         elif self.loss_line_temp == 2:
             for i in range(30):
                 self.vel_pub.publish(0)
@@ -1420,20 +1378,8 @@ class line_follow():
                                 self.count_10 = 0
                                 self.angle_controll_front(1650)
                         elif self.take_pallet == 18:
-                            if self.line_ord == 3:
-                                self.count_10 += 1
-                                if self.count_10 >= 20:
-                                    if self.has_sub_line == "yes":
-                                        self.vel_pub.publish(0)
-                                        self.ste_pub.publish(self.home_value)
-                                        self.take_pallet = 19
-                                    else:
-                                        self.vel_pub.publish(0)
-                                        self.ste_pub.publish(self.home_value)
-                                        self.take_pallet = 19
-                                else:
-                                    self.angle_controll_front(1200)
-                            else:
+                            self.count_10 += 1
+                            if self.count_10 >= 5:
                                 if self.has_sub_line == "yes":
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
@@ -1442,7 +1388,8 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 19
-                            
+                            else:
+                                self.angle_controll_front(900)
                         elif self.take_pallet == 19:
                             self.flag_2 = 1
                             for i in range(20):
@@ -2030,8 +1977,6 @@ class line_follow():
                 self.has_sub_line           = None
                 self.dir_sub                = None
                 self.dir_main               = None
-                self.line_ord               = 0
-                self.line_ord_count         = 0
                 self.lane_to_turn_          = 0
                 self.dir_out                = 0
                 self.count_10               = 0 
