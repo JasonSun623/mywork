@@ -76,7 +76,6 @@ class line_follow():
         self.last_encoder            = 0
         self.last_encoder_1          = 0
         self.last_encoder_2          = 0
-        self.last_encoder_3          = 0
         self.loss_line_flag          = 0
         self.loss_line_flag_1        = 0
         self.loss_line_temp          = 0
@@ -920,85 +919,42 @@ class line_follow():
                                         ##print "stop_encoder = ",self.stop_encoder
                                         self.take_pallet = 2
                                         self.turn_flag = 0
-                        elif self.take_pallet == 2:       
+                        elif self.take_pallet == 2:
                             print("here333333333333")
                             self.flag_2 = 1
+                            self.count_2 = self.count_2 + 1
                             if self.dir_sub == 1:
-                                if self.count_2 == 0:
-                                    self.last_encoder_3 = -(self.t_enc)
-                                    self.count_2 = 1
-                                elif self.count_2 == 1:
-                                    if ((self.last_encoder_3) + (self.t_enc)) < -215:
-                                        for i in range(5):
-                                            self.vel_pub.publish(0)
-                                            self.ste_pub.publish(self.home_value)
-                                        for i in range(20):
-                                            self.vel_pub.publish(0)
-                                            self.ste_pub.publish(2000)
-                                            self.count_2 = 0
-                                            self.take_pallet = 3
-                                    else:
-                                        self.vel_pub.publish(-1150)
-                                        self.ste_pub.publish(self.home_value)
+                                if self.count_2 >= 19 and self.count_2 < 25  :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
+                                elif self.count_2 >= 26 and self.count_2 < 36 :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(2000)
+                                    self.take_pallet = 3
+                                    self.stop_encoder = -(self.t_enc)
+                                    self.count_2 = 0
+                                else:
+                                    self.vel_pub.publish(-1100)
+                                    self.ste_pub.publish(self.home_value)
                             elif self.dir_sub == 2:
-                                if self.count_2 == 0:
-                                    self.last_encoder_3 = -(self.t_enc)
-                                    self.count_2 = 1
-                                elif self.count_2 == 1:
-                                    if ((self.last_encoder_3) + (self.t_enc)) < -3:
-                                        self.vel_pub.publish(0)
-                                        self.ste_pub.publish(self.home_value)
-                                        self.count_2 = 2
-                                        self.last_encoder_3 = -(self.t_enc)
-                                    else:
-                                        self.vel_pub.publish(-1100)
-                                        self.ste_pub.publish(self.home_value)
-                                elif self.count_2 == 2:
-                                    if ((self.last_encoder_3) + (self.t_enc)) > 60:
-                                        for i in range(5):
-                                            self.vel_pub.publish(0)
-                                            self.ste_pub.publish(self.home_value)
-                                        for i in range(20):
-                                            self.vel_pub.publish(0)
-                                            self.ste_pub.publish(2000)
-                                            self.count_2 = 0
-                                            self.take_pallet = 3
-                                    else:
-                                        self.vel_pub.publish(1150)
-                                        self.ste_pub.publish(self.home_value)
-#                            self.count_2 = self.count_2 + 1
-#                            if self.dir_sub == 1:
-#                                if self.count_2 >= 19 and self.count_2 < 25  :
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(self.home_value)
-#                                elif self.count_2 >= 26 and self.count_2 < 36 :
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(2000)
-#                                    self.take_pallet = 3
-#                                    self.stop_encoder = -(self.t_enc)
-#                                    self.count_2 = 0
-#                                else:
-#                                    self.vel_pub.publish(-1100)
-#                                    self.ste_pub.publish(self.home_value)
-#                            elif self.dir_sub == 2:
-#                                if self.count_2 >= 1 and self.count_2 < 3 :
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(self.home_value)
-#                                elif self.count_2 >= 3 and self.count_2 < 21 :
-#                                    self.vel_pub.publish(1150)
-#                                    self.ste_pub.publish(self.home_value)
-#                                elif self.count_2 >= 21 and self.count_2 < 50 :
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(self.home_value)
-#                                elif self.count_2 > 50 :
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(self.home_value)
-#                                    self.take_pallet = 3
-#                                    self.stop_encoder = -(self.t_enc)
-#                                    self.count_2 = 0
-#                                else:
-#                                    self.vel_pub.publish(0)
-#                                    self.ste_pub.publish(self.home_value)
+                                if self.count_2 >= 1 and self.count_2 < 3 :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
+                                elif self.count_2 >= 3 and self.count_2 < 28 :
+                                    self.vel_pub.publish(1150)
+                                    self.ste_pub.publish(self.home_value)
+                                elif self.count_2 >= 28 and self.count_2 < 50 :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
+                                elif self.count_2 > 50 :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
+                                    self.take_pallet = 3
+                                    self.stop_encoder = -(self.t_enc)
+                                    self.count_2 = 0
+                                else:
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
                         elif self.take_pallet == 3:
                             self.flag_2 = 1
                             self.count_5 += 1
@@ -1339,7 +1295,7 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 11
-                                elif ((self.last_encoder_2) + (self.t_enc)) >= 1020 :
+                                elif ((self.last_encoder_2) + (self.t_enc)) >= 1120 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 12
@@ -1417,7 +1373,7 @@ class line_follow():
                                 pass
                         elif self.take_pallet == 15:
                             if self.dir_sub == 2:
-                                if self.position(self.mag_ss_front) >= 4 and self.position(self.mag_ss_front) <= 13 and self.no_line_flag_front == 0 :
+                                if if self.position(self.mag_ss_front) >= 3 and self.position(self.mag_ss_front) <= 14  and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1425,7 +1381,7 @@ class line_follow():
                                     self.vel_pub.publish(1000)
                                     self.ste_pub.publish(2000)
                             elif self.dir_sub == 1:
-                                if self.position(self.mag_ss_front) >= 4 and self.position(self.mag_ss_front) <= 13  and self.no_line_flag_front == 0 :
+                                if self.position(self.mag_ss_front) >= 3 and self.position(self.mag_ss_front) <= 14  and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1622,13 +1578,11 @@ class line_follow():
                                     self.take_pallet = 2
                                     self.temp_1 = 1
                                     self.flag = 1
-                                    self.turn_flag = 0
                                     print("here1111111112222",self.lane_count)
                                 else:
                                     self.take_pallet = 1
                                     self.temp_1 = 1
                                     self.flag = 1
-                                    self.turn_flag = 0
                                     #self.lane_count_ = self.lane_count
                                     print("here111111111")
                             else:
@@ -1638,13 +1592,11 @@ class line_follow():
                                     self.take_pallet = 6
                                     self.temp_1 = 1
                                     self.flag = 1
-                                    self.turn_flag = 0
                                     print("here1111111112222",self.lane_count)
                                 else:
                                     self.take_pallet = 5
                                     self.temp_1 = 1
                                     self.flag = 1
-                                    self.turn_flag = 0
                                     self.lane_count_ = self.lane_count
                                     print("here111111111")
                         else:
@@ -1700,12 +1652,10 @@ class line_follow():
                                         self.take_pallet = 6
                                         self.temp_1 = 1
                                         self.flag = 1
-                                        self.turn_flag = 0
                                     else:
                                         self.take_pallet = 5
                                         self.temp_1 = 1
                                         self.flag = 1
-                                        self.turn_flag = 0
                                         self.lane_count_ = self.lane_count
                             else:
                                 if self.cross_detect == 1 and self.lane_count == self.lane_to_turn :#uncomment here when done
@@ -1746,7 +1696,6 @@ class line_follow():
                                     self.take_pallet = 1
                                     self.temp_1 = 2
                                     self.flag = 2
-                                    self.turn_flag = 0
                                     #self.lane_count_ = self.lane_count
                                     print("here111111111")
                             else:
@@ -1760,7 +1709,6 @@ class line_follow():
                                     self.take_pallet = 5
                                     self.temp_1 = 2
                                     self.flag = 2
-                                    self.turn_flag = 0
                                     self.lane_count_ = self.lane_count
                                     print("here111111111")
                         else:
@@ -2050,7 +1998,6 @@ class line_follow():
                 self.last_encoder           = 0
                 self.last_encoder_1         = 0
                 self.last_encoder_2         = 0
-                self.last_encoder_3         = 0
                 self.loss_line_flag         = 0
                 self.loss_line_flag_1       = 0
                 self.loss_line_temp         = 0
