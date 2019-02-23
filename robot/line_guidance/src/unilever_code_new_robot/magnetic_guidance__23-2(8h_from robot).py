@@ -239,11 +239,7 @@ class line_follow():
         self.dir_sub        = dict_data["dir_sub"]
         self.lane_to_turn_  = dict_data["row"] + 1
         self.dir_out        = dict_data["dir_out"] + 1
-        try:
-            self.line_ord       = dict_data["line_ord"] + 1
-        except:
-            self.line_ord = 1
-        
+        self.line_ord       = dict_data["line_ord"] + 1
         if dict_data["hasSubLine"] == "yes" and dict_data["dir_sub"] == 1:
             if dict_data["bay"] == 0:
                 self.lane_to_turn = (dict_data["bay"] + 2)
@@ -551,7 +547,7 @@ class line_follow():
             #print ((self.last_encoder) + (self.t_enc))
             if self.has_sub_line == "no" and self.line_ord == 1:
                 if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 3
+                    self.loss_line_temp = 2
                     self.loss_line_temp_3 = 0 
                 else:
                     if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
@@ -570,7 +566,7 @@ class line_follow():
                     self.PID_enable = 2
             elif self.has_sub_line == "no" and self.line_ord == 2:
                 if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 3
+                    self.loss_line_temp = 2
                     self.loss_line_temp_3 = 0 
                 else:
                     if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
@@ -589,7 +585,7 @@ class line_follow():
                     self.PID_enable = 2
             else:
                 if self.count_magss > 3 :
-                    self.loss_line_temp = 3
+                    self.loss_line_temp = 2
                 elif ((self.last_encoder) + (self.t_enc)) < -1500 :
                     for i in range(30):
                         self.vel_pub.publish(0)
@@ -598,58 +594,23 @@ class line_follow():
                 else:
                     self.vel_pub.publish(-1100)
                     self.ste_pub.publish(self.home_value)
-#        elif self.loss_line_temp == 2:
-#            for i in range(30):
-#                self.vel_pub.publish(0)
-#                self.ste_pub.publish(self.home_value)
-#            self.loss_line_temp = 3
+        elif self.loss_line_temp == 2:
+            for i in range(30):
+                self.vel_pub.publish(0)
+                self.ste_pub.publish(self.home_value)
+            self.loss_line_temp = 3
         elif self.loss_line_temp == 3:
-            if self.dir_main == 1:
-                if self.count_2 == 0:
-                    self.last_encoder_3 = -(self.t_enc)
-                    self.count_2 = 1
-                elif self.count_2 == 1:
-                    if ((self.last_encoder_3) + (self.t_enc)) < -215:
-                        for i in range(5):
-                            self.vel_pub.publish(0)
-                            self.ste_pub.publish(self.home_value)
-                        for i in range(20):
-                            self.vel_pub.publish(0)
-                            self.ste_pub.publish(2000)
-                            self.count_2 = 0
-                            self.last_encoder_1 = -(self.t_enc)
-                            self.loss_line_temp = 4
-                    else:
-                        self.vel_pub.publish(-1150)
-                        self.ste_pub.publish(self.home_value)
-            elif self.dir_main == 2:
-                if self.count_2 == 0:
-                    self.last_encoder_3 = -(self.t_enc)
-                    self.count_2 = 1
-                elif self.count_2 == 1:
-                    if ((self.last_encoder_3) + (self.t_enc)) < -3:
-                        self.vel_pub.publish(0)
-                        self.ste_pub.publish(self.home_value)
-                        self.count_2 = 2
-                        self.last_encoder_3 = -(self.t_enc)
-                    else:
-                        self.vel_pub.publish(-1100)
-                        self.ste_pub.publish(self.home_value)
-                elif self.count_2 == 2:
-#                    print("(self.last_encoder_3) + (self.t_enc)",(self.last_encoder_3) + (self.t_enc))
-                    if ((self.last_encoder_3) + (self.t_enc)) > 5:
-                        for i in range(20):
-                            self.vel_pub.publish(0)
-                            self.ste_pub.publish(self.home_value)
-                        for i in range(20):
-                            self.vel_pub.publish(0)
-                            self.ste_pub.publish(2000)
-                        self.count_2 = 0
-                        self.loss_line_temp = 4
-                        self.last_encoder_1 = -(self.t_enc)
-                    else:
-                        self.vel_pub.publish(1150)
-                        self.ste_pub.publish(self.home_value)
+            self.count_8 += 1
+            if self.count_8 >=23:
+                for i in range(30):
+                    self.vel_pub.publish(0)  #left
+                    self.ste_pub.publish(2000)
+                self.loss_line_temp = 4
+                self.last_encoder_1 = -(self.t_enc)
+                self.count_8 = 0
+            else:
+                self.vel_pub.publish(-1100)
+                self.ste_pub.publish(self.home_value)
         elif self.loss_line_temp == 4:
             if self.dir_main == 1:
                 if ((self.last_encoder_1) + (self.t_enc)) > 1100:
@@ -660,14 +621,24 @@ class line_follow():
                     self.vel_pub.publish(1300)
                     self.ste_pub.publish(2000)
             elif self.dir_main == 2:
-                if ((self.last_encoder_1) + (self.t_enc)) < -1100:
-                    self.loss_line_temp = 5
-                    self.dir_main_temp = 2
-                    self.vel_pub.publish(-1000)
-                    self.ste_pub.publish(2000)
-                else:
-                    self.vel_pub.publish(-1300)
-                    self.ste_pub.publish(2000)
+                if self.dir_main_temp == 0:
+                    self.dir_main_count += 1
+                    if self.dir_main_count >= 44:
+                        self.dir_main_temp = 1
+                    else:
+                        self.vel_pub.publish(1100)
+                        self.ste_pub.publish(self.home_value)
+                elif self.dir_main_temp == 1:
+                    if ((self.last_encoder_1) + (self.t_enc)) < -1100:
+                        self.loss_line_temp = 5
+                        self.dir_main_temp = 2
+                        self.vel_pub.publish(-1000)
+                        self.ste_pub.publish(2000)
+                    else:
+                        self.vel_pub.publish(-1300)
+                        self.ste_pub.publish(2000)
+            else:
+                pass
         elif self.loss_line_temp == 5:
             if self.dir_main == 1:
                 if self.mag_left_value == 0:
@@ -964,8 +935,8 @@ class line_follow():
                                         for i in range(20):
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(2000)
-                                        self.count_2 = 0
-                                        self.take_pallet = 3
+                                            self.count_2 = 0
+                                            self.take_pallet = 3
                                     else:
                                         self.vel_pub.publish(-1150)
                                         self.ste_pub.publish(self.home_value)
@@ -983,15 +954,15 @@ class line_follow():
                                         self.vel_pub.publish(-1100)
                                         self.ste_pub.publish(self.home_value)
                                 elif self.count_2 == 2:
-                                    if ((self.last_encoder_3) + (self.t_enc)) > 5:
+                                    if ((self.last_encoder_3) + (self.t_enc)) > 60:
                                         for i in range(5):
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(self.home_value)
                                         for i in range(20):
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(2000)
-                                        self.count_2 = 0
-                                        self.take_pallet = 3
+                                            self.count_2 = 0
+                                            self.take_pallet = 3
                                     else:
                                         self.vel_pub.publish(1150)
                                         self.ste_pub.publish(self.home_value)
@@ -1234,7 +1205,7 @@ class line_follow():
                                         self.flag = 0
                                         self.angle_controll(-1200)  
                                         print("33333333333",self.loss_line_temp_4)
-                                        print("self.lane_count_333333333 = ",self.lane_count_)
+                                        print("self.lane_count_333333333 = ",self.lane_count)
 #                            if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_:# and self.pos_stop == 1 :#uncomment here when done
 #                                #self.vel_pub.publish(0)
 #                                #self.ste_pub.publish(5200)
@@ -1368,7 +1339,7 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 11
-                                elif ((self.last_encoder_2) + (self.t_enc)) >= 970 :
+                                elif ((self.last_encoder_2) + (self.t_enc)) >= 1020 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 12
@@ -1446,7 +1417,7 @@ class line_follow():
                                 pass
                         elif self.take_pallet == 15:
                             if self.dir_sub == 2:
-                                if self.position(self.mag_ss_front) >= 5 and self.position(self.mag_ss_front) <= 12 and self.no_line_flag_front == 0 :
+                                if self.position(self.mag_ss_front) >= 4 and self.position(self.mag_ss_front) <= 13 and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1454,7 +1425,7 @@ class line_follow():
                                     self.vel_pub.publish(1000)
                                     self.ste_pub.publish(2000)
                             elif self.dir_sub == 1:
-                                if self.position(self.mag_ss_front) >= 5 and self.position(self.mag_ss_front) <= 12  and self.no_line_flag_front == 0 :
+                                if self.position(self.mag_ss_front) >= 4 and self.position(self.mag_ss_front) <= 13  and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1527,7 +1498,7 @@ class line_follow():
                             if self.dir_out == 3:
                                 self.flag_2 = 1
                                 ##print("encoder_here",((self.last_encoder_1) + (self.t_enc)))
-                                if ((self.last_encoder_1) + (self.t_enc)) < -1700:
+                                if ((self.last_encoder_1) + (self.t_enc)) < -1500:
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 21
@@ -2022,7 +1993,7 @@ class line_follow():
         
     ################################__MAIN__###################################
     def main(self):
-        r = rospy.Rate(50)
+        r = rospy.Rate(20)
         while not rospy.is_shutdown():
             if self.PID_enable == 2:
                 if self.status == 1:
