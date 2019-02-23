@@ -547,7 +547,7 @@ class line_follow():
             #print ((self.last_encoder) + (self.t_enc))
             if self.has_sub_line == "no" and self.line_ord == 1:
                 if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 2
+                    self.loss_line_temp = 3
                     self.loss_line_temp_3 = 0 
                 else:
                     if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
@@ -566,7 +566,7 @@ class line_follow():
                     self.PID_enable = 2
             elif self.has_sub_line == "no" and self.line_ord == 2:
                 if self.line_ord_count == self.line_ord:
-                    self.loss_line_temp = 2
+                    self.loss_line_temp = 3
                     self.loss_line_temp_3 = 0 
                 else:
                     if self.count_magss > 12 and self.loss_line_temp_3 == 0  :
@@ -585,7 +585,7 @@ class line_follow():
                     self.PID_enable = 2
             else:
                 if self.count_magss > 3 :
-                    self.loss_line_temp = 2
+                    self.loss_line_temp = 3
                 elif ((self.last_encoder) + (self.t_enc)) < -1500 :
                     for i in range(30):
                         self.vel_pub.publish(0)
@@ -594,23 +594,55 @@ class line_follow():
                 else:
                     self.vel_pub.publish(-1100)
                     self.ste_pub.publish(self.home_value)
-        elif self.loss_line_temp == 2:
-            for i in range(30):
-                self.vel_pub.publish(0)
-                self.ste_pub.publish(self.home_value)
-            self.loss_line_temp = 3
+#        elif self.loss_line_temp == 2:
+#            for i in range(30):
+#                self.vel_pub.publish(0)
+#                self.ste_pub.publish(self.home_value)
+#            self.loss_line_temp = 3
         elif self.loss_line_temp == 3:
-            self.count_8 += 1
-            if self.count_8 >=23:
-                for i in range(30):
-                    self.vel_pub.publish(0)  #left
-                    self.ste_pub.publish(2000)
-                self.loss_line_temp = 4
-                self.last_encoder_1 = -(self.t_enc)
-                self.count_8 = 0
-            else:
-                self.vel_pub.publish(-1100)
-                self.ste_pub.publish(self.home_value)
+            if self.dir_sub == 1:
+                if self.count_2 == 0:
+                    self.last_encoder_3 = -(self.t_enc)
+                    self.count_2 = 1
+                elif self.count_2 == 1:
+                    if ((self.last_encoder_3) + (self.t_enc)) < -215:
+                        for i in range(5):
+                            self.vel_pub.publish(0)
+                            self.ste_pub.publish(self.home_value)
+                        for i in range(20):
+                            self.vel_pub.publish(0)
+                            self.ste_pub.publish(2000)
+                            self.count_2 = 0
+                            self.loss_line_temp = 4
+                    else:
+                        self.vel_pub.publish(-1150)
+                        self.ste_pub.publish(self.home_value)
+            elif self.dir_sub == 2:
+                if self.count_2 == 0:
+                    self.last_encoder_3 = -(self.t_enc)
+                    self.count_2 = 1
+                elif self.count_2 == 1:
+                    if ((self.last_encoder_3) + (self.t_enc)) < -3:
+                        self.vel_pub.publish(0)
+                        self.ste_pub.publish(self.home_value)
+                        self.count_2 = 2
+                        self.last_encoder_3 = -(self.t_enc)
+                    else:
+                        self.vel_pub.publish(-1100)
+                        self.ste_pub.publish(self.home_value)
+                elif self.count_2 == 2:
+                    if ((self.last_encoder_3) + (self.t_enc)) > 60:
+                        for i in range(5):
+                            self.vel_pub.publish(0)
+                            self.ste_pub.publish(self.home_value)
+                        for i in range(20):
+                            self.vel_pub.publish(0)
+                            self.ste_pub.publish(2000)
+                            self.count_2 = 0
+                            self.loss_line_temp = 4
+                    else:
+                        self.vel_pub.publish(1150)
+                        self.ste_pub.publish(self.home_value)
         elif self.loss_line_temp == 4:
             if self.dir_main == 1:
                 if ((self.last_encoder_1) + (self.t_enc)) > 1100:
