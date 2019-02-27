@@ -1080,7 +1080,6 @@ class line_follow():
                         elif self.take_pallet == 5:
                             #print("self.lane_count_",self.lane_count_)
                             if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
-                                self.flag_2 = 1
                                 self.stop_encoder = -(self.t_enc)
                                 ###print "stop_encoder = ",self.stop_encoder
                                 self.take_pallet = 6
@@ -1127,7 +1126,6 @@ class line_follow():
                                                 #self.stop_encoder = -(self.t_enc)
                                                 ###print "stop_encoder = ",self.stop_encoder
                                                 self.take_pallet = 6
-                                                self.flag_2 = 1
                                         elif self.pos_right == 1:
                                             if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                                 self.lane_count_ += 1
@@ -1168,7 +1166,6 @@ class line_follow():
                                                 #self.stop_encoder = -(self.t_enc)
                                                 ###print "stop_encoder = ",self.stop_encoder
                                                 self.take_pallet = 6
-                                                self.flag_2 = 1
                                     elif self.turn_flag == 1:
                                         if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                             self.lane_count_ += 1
@@ -1179,7 +1176,6 @@ class line_follow():
                                         else:
                                             self.loss_line_temp_4 = 0
                                         if self.temp_1 == 1 :
-                                            self.flag_2 = 1
 #                                            if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
 #                                                self.lane_count_ += 1
 #                                                self.loss_line_temp_4 = 1
@@ -1203,7 +1199,6 @@ class line_follow():
                                                 self.vel_pub.publish(-1000)  #left
                                                 self.ste_pub.publish(8300)
                                         elif self.temp_1 == 2:
-                                            self.flag_2 = 1
 #                                            if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
 #                                                self.lane_count_ += 1
 #                                                self.loss_line_temp_4 = 1
@@ -1230,7 +1225,6 @@ class line_follow():
                                             self.stop_encoder = -(self.t_enc)
                                             ###print "stop_encoder = ",self.stop_encoder
                                             self.take_pallet = 6
-                                            self.flag_2 = 1
                                 else:          
                                     if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                         self.lane_count_ += 1
