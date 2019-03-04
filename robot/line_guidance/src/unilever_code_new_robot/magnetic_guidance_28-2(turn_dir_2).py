@@ -634,7 +634,7 @@ class line_follow():
                     self.last_encoder_3 = -(self.t_enc)
                     self.count_2 = 1
                 elif self.count_2 == 1:
-                    if ((self.last_encoder_3) + (self.t_enc)) < -50:
+                    if ((self.last_encoder_3) + (self.t_enc)) < -3:
                         self.vel_pub.publish(0)
                         self.ste_pub.publish(self.home_value)
                         self.count_2 = 2
@@ -982,7 +982,7 @@ class line_follow():
                                     self.last_encoder_3 = -(self.t_enc)
                                     self.count_2 = 1
                                 elif self.count_2 == 1:
-                                    if ((self.last_encoder_3) + (self.t_enc)) < -50:
+                                    if ((self.last_encoder_3) + (self.t_enc)) < -3:
                                         self.vel_pub.publish(0)
                                         self.ste_pub.publish(self.home_value)
                                         self.count_2 = 2
@@ -1126,8 +1126,8 @@ class line_follow():
                                             if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
                                                 #self.stop_encoder = -(self.t_enc)
                                                 ###print "stop_encoder = ",self.stop_encoder
-                                                self.flag_2 = 1
                                                 self.take_pallet = 6
+                                                self.flag_2 = 1
                                         elif self.pos_right == 1:
                                             if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                                 self.lane_count_ += 1
@@ -1167,8 +1167,8 @@ class line_follow():
                                             if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
                                                 #self.stop_encoder = -(self.t_enc)
                                                 ###print "stop_encoder = ",self.stop_encoder
-                                                self.flag_2 = 1
                                                 self.take_pallet = 6
+                                                self.flag_2 = 1
                                     elif self.turn_flag == 1:
                                         if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                             self.lane_count_ += 1
@@ -1229,8 +1229,8 @@ class line_follow():
                                         if self.cross_detect == 1 and self.lane_count_ == self.lane_to_turn_ :#uncomment here when done
                                             self.stop_encoder = -(self.t_enc)
                                             ###print "stop_encoder = ",self.stop_encoder
-                                            self.flag_2 = 1
                                             self.take_pallet = 6
+                                            self.flag_2 = 1
                                 else:          
                                     if self.count_magss > 12 and self.loss_line_temp_4 == 0  :
                                         self.lane_count_ += 1
@@ -1310,7 +1310,6 @@ class line_follow():
                                     else:
                                         self.lift_pub.publish("lift_down")
                             else:
-                                self.flag_2 = 1
                                 if self.pallet == 0:
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
@@ -1743,11 +1742,11 @@ class line_follow():
                                 if self.cross_detect == 1 and self.lane_count == self.lane_to_turn_ :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.lane_count == self.lane_to_turn_:
+                                        self.take_pallet = 6
                                         self.temp_1 = 1
                                         self.flag = 1
                                         self.turn_flag = 0
                                         self.flag_2 = 1
-                                        self.take_pallet = 6
                                     else:
                                         self.take_pallet = 5
                                         self.temp_1 = 1
@@ -1800,9 +1799,9 @@ class line_follow():
                                 self.now_encoder = -(self.t_enc)
                                 if self.lane_count == self.lane_to_turn_:
                                     self.flag_2 = 1
+                                    self.take_pallet = 6
                                     self.temp_1 = 2
                                     self.flag = 2
-                                    self.take_pallet = 6
                                     #print("here1111111112222",self.lane_count)
                                 else:
                                     self.take_pallet = 5
@@ -1859,11 +1858,11 @@ class line_follow():
                                 if self.cross_detect == 1 and self.lane_count == self.lane_to_turn_ :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.lane_count == self.lane_to_turn_:
+                                        self.take_pallet = 6
                                         self.flag_2 = 1
                                         self.temp_1 = 2
                                         self.flag = 2
                                         self.now_encoder = -(self.t_enc)
-                                        self.take_pallet = 6
                                     else:
                                         self.take_pallet = 5
                                         self.temp_1 = 2
