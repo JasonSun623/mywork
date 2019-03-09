@@ -479,10 +479,10 @@ class line_follow():
         ##print "speed",speed, "angle",self.angle#,"pos",pos
         self.vel_pub.publish(speed)
         self.ste_pub.publish(self.angle)
-        if pos >= 14:
+        if pos >= 15:
             self.balance_flag = 1
             self.timer(pos,self.loss_line_flag_1)
-        elif pos <= 3:
+        elif pos <= 2:
             self.balance_flag = 1
             self.timer(pos,self.loss_line_flag_1)
         else:
@@ -693,7 +693,7 @@ class line_follow():
             else:
                 pass
         elif self.loss_line_temp == 6:
-            for i in range(30):
+            for i in range(200):
                 self.vel_pub.publish(0)
                 self.ste_pub.publish(self.home_value)
             self.loss_line_flag = 1
@@ -1492,7 +1492,7 @@ class line_follow():
                                         if self.position(self.mag_ss) < 8 :#and self.count_magss > 10:
                                             self.vel_pub.publish(1200)
                                             self.ste_pub.publish(self.home_value + 100)
-                                        elif self.position(self.mag_ss) < 8 :#and self.count_magss > 10:
+                                        elif self.position(self.mag_ss) >= 8 :#and self.count_magss > 10:
                                             self.vel_pub.publish(1200)
                                             self.ste_pub.publish(self.home_value - 100)
                                         else:
@@ -1501,10 +1501,13 @@ class line_follow():
                                 self.take_pallet = 17
                         elif self.take_pallet == 17:
                             if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
-                                self.count_10 += 1
-                                if self.count_10 >= 15:
+                                if self.line_ord == 3:
                                     self.take_pallet = 18
-                                    self.count_10 = 0
+                                else:
+                                    self.count_10 += 1
+                                    if self.count_10 >= 15:
+                                        self.take_pallet = 18
+                                        self.count_10 = 0
                             else:
                                 self.count_10 = 0
                                 self.angle_controll_front(1650)
@@ -1534,7 +1537,7 @@ class line_follow():
                             
                         elif self.take_pallet == 19:
                             self.flag_2 = 1
-                            for i in range(20):
+                            for i in range(200):
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
                             self.last_encoder_1 = -(self.t_enc)
