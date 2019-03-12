@@ -71,7 +71,6 @@ class line_follow():
         self.count_7                 = 0
         self.count_8                 = 0
         self.count_9                 = 0
-        self.count_11                = 0
         self.temp_enc                = 0
         self.now_encoder             = 0
         self.last_encoder            = 0
@@ -106,7 +105,6 @@ class line_follow():
         self.balance_flag            = 0
         self.dir_main_temp           = 0
         self.dir_main_count          = 0
-        self.traffic_flag            = 2
         #self.lane_to_turn = 1
         #self.lane_to_turn_ = 2
         self.charger_ready           = 0
@@ -139,7 +137,6 @@ class line_follow():
         pallet_pos_sub = rospy.Subscriber('/pospallet',Int32 , self.pallet_pos_callback)
         command_robot = rospy.Subscriber('/cmdAreaPallet',String , self.server_callback)
         server_sub = rospy.Subscriber('linedetectionctrl', Int32, self.server_cmd_callback)
-        traffic_sub = rospy.Subscriber('ctrlRobotDriving', Int32, self.traffic_cmd_callback)
         ###########################__PUBLISH__##############################
         self.vel_pub = rospy.Publisher('twheel',Int32,queue_size = 10)
         #self.vel_pub = rospy.Publisher('fwheel_vtarget',Float32,queue_size = 100)
@@ -237,17 +234,6 @@ class line_follow():
     
     def lift_callback(self,msg):
         self.lift_val = msg.data
-        
-    ##########################__TRAFFIC__###########################
-    
-    def traffic_cmd_callback(self,msg):
-        data = msg.data
-        if data == 0:
-            self.traffic_flag = 0
-        elif data == 2:
-            self.traffic_flag = 2
-        else:
-            pass
     
     ##########################__JSON__###########################
     
@@ -707,21 +693,13 @@ class line_follow():
             else:
                 pass
         elif self.loss_line_temp == 6:
-            self.count_11 += 1
-            if self.count_11 < 10:
-                self.vel_pub.publish(0)
-                self.ste_pub.publish(2000)
-            elif self.count_11 > 10 and self.count_11 < 30:
+            for i in range(200):
                 self.vel_pub.publish(0)
                 self.ste_pub.publish(self.home_value)
-            elif self.count_11 > 30:
-                self.loss_line_flag = 1
-                self.loss_line_temp_2 = 1
-                self.count_lane = 2
-                self.loss_line_temp = 0
-                self.count_11 = 0
-            else:
-                pass
+            self.loss_line_flag = 1
+            self.loss_line_temp_2 = 1
+            self.count_lane = 2
+            self.loss_line_temp = 0
                 
         ###########################################################
         
@@ -1097,7 +1075,6 @@ class line_follow():
                             if self.count_9 >= 100:
                                 self.take_pallet = 5
                                 self.count_9 = 0
-                                self.flag_2 = 0
                             else:
                                 self.angle_controll(-1200)
                         elif self.take_pallet == 5:
@@ -1374,10 +1351,14 @@ class line_follow():
                                 self.loss_line_temp_4 = 1
                             if self.count_front_magss > 11 and self.loss_line_temp_4 == 1:
                                 pass
+#                                    if self.count_magss > 11:
+#                                        pass
+#                                    else:
+#                                        self.loss_line_temp_4 = 0 
                             else:
                                 self.loss_line_temp_4 = 0
                             #print("self.lane_count_out = ",self.lane_count_out)
-                            if self.cross_front_detect == 1 and self.lane_count_out >= self.lane_to_turn_ :
+                            if self.cross_front_detect == 1 and self.lane_count_out == self.lane_to_turn_ :
                                 self.vel_pub.publish(1200)
                                 self.ste_pub.publish(self.home_value)
                                 self.last_encoder_2 = -(self.t_enc)
@@ -1389,6 +1370,10 @@ class line_follow():
                                     self.loss_line_temp_4 = 1
                                 if self.count_front_magss > 11 and self.loss_line_temp_4 == 1:
                                     pass
+#                                    if self.count_magss > 11:
+#                                        pass
+#                                    else:
+#                                        self.loss_line_temp_4 = 0 
                                 else:
                                     self.loss_line_temp_4 = 0
                                     self.angle_controll_front(1350)
@@ -1552,19 +1537,11 @@ class line_follow():
                             
                         elif self.take_pallet == 19:
                             self.flag_2 = 1
-                            self.count_11 += 1
-                            if self.count_11 < 10:
+                            for i in range(200):
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
-                            elif self.count_11 > 10 and self.count_11 < 30:
-                                self.vel_pub.publish(0)
-                                self.ste_pub.publish(2000)
-                            elif self.count_11 > 30:
-                                self.last_encoder_1 = -(self.t_enc)
-                                self.take_pallet = 20
-                                self.count_11 = 0
-                            else:
-                                pass
+                            self.last_encoder_1 = -(self.t_enc)
+                            self.take_pallet = 20
                         elif self.take_pallet == 20:
                             if self.dir_out == 3:
                                 self.flag_2 = 1
@@ -2173,7 +2150,6 @@ class line_follow():
                 self.count_7                = 0
                 self.count_8                = 0
                 self.count_9                = 0
-                self.count_11               = 0
                 self.now_encoder            = 0
                 self.last_encoder           = 0
                 self.last_encoder_1         = 0
@@ -2206,7 +2182,6 @@ class line_follow():
                 self.no_line_flag           = 0
                 self.dir_main_temp          = 0
                 self.dir_main_count         = 0
-                self.traffic_flag           = 2
                 #self.lane_to_turn_ = 2
                 self.lane_to_turn           = 0
                 self.has_sub_line           = None
@@ -2233,12 +2208,7 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.taking_pallet()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass
+                    self.taking_pallet()
             elif self.PID_enable == 3:
                 if self.flag_laser == 0:
                     self.line_pub.publish(1000)
@@ -2250,12 +2220,8 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.moving_charger()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass
+                    self.moving_charger()
+            
             elif self.PID_enable == 4:
                 if self.flag_laser == 0:
                     self.line_pub.publish(1000)
@@ -2267,12 +2233,7 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.moving_out_charger()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass        
+                    self.moving_out_charger()
             elif self.PID_enable == 5:
                 if self.flag_laser == 0:
                     self.line_pub.publish(1000)
@@ -2284,12 +2245,7 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.start_charger()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass           
+                    self.start_charger()
             elif self.PID_enable == 6:
                 if self.flag_laser == 0:
                     self.line_pub.publish(1000)
@@ -2301,12 +2257,7 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.turn_charger()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass                    
+                    self.turn_charger()
             elif self.PID_enable == 7:
                 if self.flag_laser == 0:
                     self.line_pub.publish(1000)
@@ -2318,12 +2269,7 @@ class line_follow():
                     else:
                         self.count_8 += 1
                 elif self.flag_laser == 2:
-                    if self.traffic_flag == 2:
-                        self.return_ready()
-                    elif self.traffic_flag == 0:
-                        self.vel_pub.publish(0)
-                    else:
-                        pass                  
+                    self.return_ready()
             elif self.PID_enable == 0:  
                 pass
                 ##print ' Waiting... '

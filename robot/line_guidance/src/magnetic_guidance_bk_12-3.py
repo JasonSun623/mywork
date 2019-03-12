@@ -71,7 +71,6 @@ class line_follow():
         self.count_7                 = 0
         self.count_8                 = 0
         self.count_9                 = 0
-        self.count_11                = 0
         self.temp_enc                = 0
         self.now_encoder             = 0
         self.last_encoder            = 0
@@ -707,21 +706,13 @@ class line_follow():
             else:
                 pass
         elif self.loss_line_temp == 6:
-            self.count_11 += 1
-            if self.count_11 < 10:
-                self.vel_pub.publish(0)
-                self.ste_pub.publish(2000)
-            elif self.count_11 > 10 and self.count_11 < 30:
+            for i in range(200):
                 self.vel_pub.publish(0)
                 self.ste_pub.publish(self.home_value)
-            elif self.count_11 > 30:
-                self.loss_line_flag = 1
-                self.loss_line_temp_2 = 1
-                self.count_lane = 2
-                self.loss_line_temp = 0
-                self.count_11 = 0
-            else:
-                pass
+            self.loss_line_flag = 1
+            self.loss_line_temp_2 = 1
+            self.count_lane = 2
+            self.loss_line_temp = 0
                 
         ###########################################################
         
@@ -1097,7 +1088,6 @@ class line_follow():
                             if self.count_9 >= 100:
                                 self.take_pallet = 5
                                 self.count_9 = 0
-                                self.flag_2 = 0
                             else:
                                 self.angle_controll(-1200)
                         elif self.take_pallet == 5:
@@ -1552,19 +1542,11 @@ class line_follow():
                             
                         elif self.take_pallet == 19:
                             self.flag_2 = 1
-                            self.count_11 += 1
-                            if self.count_11 < 10:
+                            for i in range(200):
                                 self.vel_pub.publish(0)
                                 self.ste_pub.publish(self.home_value)
-                            elif self.count_11 > 10 and self.count_11 < 30:
-                                self.vel_pub.publish(0)
-                                self.ste_pub.publish(2000)
-                            elif self.count_11 > 30:
-                                self.last_encoder_1 = -(self.t_enc)
-                                self.take_pallet = 20
-                                self.count_11 = 0
-                            else:
-                                pass
+                            self.last_encoder_1 = -(self.t_enc)
+                            self.take_pallet = 20
                         elif self.take_pallet == 20:
                             if self.dir_out == 3:
                                 self.flag_2 = 1
@@ -2173,7 +2155,6 @@ class line_follow():
                 self.count_7                = 0
                 self.count_8                = 0
                 self.count_9                = 0
-                self.count_11               = 0
                 self.now_encoder            = 0
                 self.last_encoder           = 0
                 self.last_encoder_1         = 0

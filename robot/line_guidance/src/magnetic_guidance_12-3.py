@@ -1097,7 +1097,6 @@ class line_follow():
                             if self.count_9 >= 100:
                                 self.take_pallet = 5
                                 self.count_9 = 0
-                                self.flag_2 = 0
                             else:
                                 self.angle_controll(-1200)
                         elif self.take_pallet == 5:
