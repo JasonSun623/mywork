@@ -78,6 +78,7 @@ class line_follow():
         self.last_encoder_1          = 0
         self.last_encoder_2          = 0
         self.last_encoder_3          = 0
+        self.last_encoder_4          = 0
         self.loss_line_flag          = 0
         self.loss_line_flag_1        = 0
         self.loss_line_temp          = 0
@@ -793,7 +794,7 @@ class line_follow():
                 if self.count_3 > 30:
                     self.vel_pub.publish(0)
                     self.ste_pub.publish(self.home_value)
-                    self.error_pub.publish(4205)
+                    self.error_pub.publish(3215)
                     self.PID_enable = 2
                     self.status = 3
                 else:
@@ -1399,13 +1400,13 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 11
-                                elif ((self.last_encoder_2) + (self.t_enc)) >= 970 :
+                                elif ((self.last_encoder_2) + (self.t_enc)) >= 900 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 12
                                 else:
                                     self.vel_pub.publish(1200)
-                                    self.ste_pub.publish(self.home_value)
+                                    self.ste_pub.publish(self.home_value + 100)
                             elif self.dir_sub == 1:
                                 if self.count_magss > 11:
                                     self.vel_pub.publish(0)
@@ -1438,6 +1439,7 @@ class line_follow():
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 14
                                     self.count_9 = 0
+                                    self.last_encoder_4 = -(self.t_enc)
                                 else:
                                     self.vel_pub.publish(1000)
                                     self.ste_pub.publish(2000)
@@ -1448,6 +1450,7 @@ class line_follow():
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 14
                                     self.count_9 = 0
+                                    self.last_encoder_4 = -(self.t_enc)
                                 else:
                                     self.vel_pub.publish(-1000)
                                     self.ste_pub.publish(2000)
@@ -1458,18 +1461,20 @@ class line_follow():
                                 self.take_pallet = 20
                         elif self.take_pallet == 14:
                             if self.dir_sub == 2:
-                                if self.mag_left_value == 1:
+                                if self.mag_left_value == 1 or ((self.last_encoder_4) + (self.t_enc)) > 1000:
                                     self.vel_pub.publish(1000)
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 15
+                                    self.last_encoder_4 = 0
                                 else:
                                     self.vel_pub.publish(1200)
                                     self.ste_pub.publish(2000)
                             elif self.dir_sub == 1:
-                                if self.mag_right_value == 1:
+                                if self.mag_right_value == 1 or ((self.last_encoder_4) + (self.t_enc)) < -1000:
                                     self.vel_pub.publish(-1000)
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 15
+                                    self.last_encoder_4 = 0
                                 else:
                                     self.vel_pub.publish(-1200)
                                     self.ste_pub.publish(2000)
@@ -1477,7 +1482,7 @@ class line_follow():
                                 pass
                         elif self.take_pallet == 15:
                             if self.dir_sub == 2:
-                                if self.position(self.mag_ss_front) >= 5 and self.position(self.mag_ss_front) <= 12 and self.no_line_flag_front == 0 :
+                                if self.position(self.mag_ss_front) >= 6 and self.position(self.mag_ss_front) <= 11 and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1485,7 +1490,7 @@ class line_follow():
                                     self.vel_pub.publish(1000)
                                     self.ste_pub.publish(2000)
                             elif self.dir_sub == 1:
-                                if self.position(self.mag_ss_front) >= 5 and self.position(self.mag_ss_front) <= 12  and self.no_line_flag_front == 0 :
+                                if self.position(self.mag_ss_front) >= 6 and self.position(self.mag_ss_front) <= 11  and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 16
@@ -1930,7 +1935,7 @@ class line_follow():
                 if self.count_3 > 30:
                     self.vel_pub.publish(0)
                     self.ste_pub.publish(5200)
-                    self.error_pub.publish(4205)
+                    self.error_pub.publish(3215)
                     self.PID_enable = 2
                     self.status = 3
                     self.count_3 = 0
@@ -2179,6 +2184,7 @@ class line_follow():
                 self.last_encoder_1         = 0
                 self.last_encoder_2         = 0
                 self.last_encoder_3         = 0
+                self.last_encoder_4         = 0
                 self.loss_line_flag         = 0
                 self.loss_line_flag_1       = 0
                 self.loss_line_temp         = 0
