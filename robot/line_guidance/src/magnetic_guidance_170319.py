@@ -22,7 +22,6 @@ import logging
 
 
 
-
 class line_follow():
 
     ##############################____INIT____############################
@@ -130,12 +129,12 @@ class line_follow():
         self.count_10                = 0 
         self.charger_flag            = 0
         self.file_count              = 0
-        self.logger = logging.getLogger('line_folow')
-        self.hdlr = logging.FileHandler('log_line/log.txt')
-        self.formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        self.hdlr.setFormatter(self.formatter)
-        self.logger.addHandler(self.hdlr) 
-        self.logger.setLevel(logging.INFO)
+        logger = logging.getLogger('line_folow')
+        hdlr = logging.FileHandler('log_line/log.txt')
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr) 
+        logger.setLevel(logging.INFO)
         ##########################__INIT_NODE__############################## 
         rospy.init_node('LINE_FOLLOWER')
         
@@ -173,6 +172,7 @@ class line_follow():
     
     def Mag_callback(self,msg):
         mag_sensor = str(msg.data)
+        logger.info('back_mag_data %s', mag_sensor)
         mag_sensor_list = np.array(list(mag_sensor),dtype=np.int)
         mag_value_not = np.logical_not(mag_sensor_list)
         self.mag_ss = map(int,mag_value_not)
@@ -1008,21 +1008,12 @@ class line_follow():
                         elif self.take_pallet == 3:
                             self.flag_2 = 1
                             self.count_5 += 1
-                            if self.count_5 < 150:
+                            if self.count_5 < 120:
                                 if self.dir_sub == 1:
-                                    self.vel_pub.publish(1100)
+                                    self.vel_pub.publish(1200)
                                     self.ste_pub.publish(2000)
                                 elif self.dir_sub == 2:
                                     self.vel_pub.publish(-1100)
-                                    self.ste_pub.publish(2000)
-                                else:
-                                    pass
-                            elif self.count_5 > 150 and self.count_5 < 700:
-                                if self.dir_sub == 1:
-                                    self.vel_pub.publish(1300)
-                                    self.ste_pub.publish(2000)
-                                elif self.dir_sub == 2:
-                                    self.vel_pub.publish(-1300)
                                     self.ste_pub.publish(2000)
                                 else:
                                     pass
@@ -1576,7 +1567,7 @@ class line_follow():
                             else:
                                 self.angle_controll(-1200)
                             if self.has_sub_line == "no":
-                                if self.cross_detect == 1 :#and self.bay_count == self.row :#uncomment here when done
+                                if self.cross_detect == 1 and self.bay_count == self.row :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.bay_count == self.row:
                                         self.temp_1 = 1
@@ -1591,7 +1582,7 @@ class line_follow():
                                         self.turn_flag = 0
                                         self.row_count = self.bay_count
                             else:
-                                if self.cross_detect == 1 :#and self.bay_count == self.bay :#uncomment here when done
+                                if self.cross_detect == 1 and self.bay_count == self.bay :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.bay_count == self.bay:
                                         self.take_pallet = 2
@@ -1692,7 +1683,7 @@ class line_follow():
 #                                    self.loss_line_temp_3 = 0 
                                 self.angle_controll(-1200)
                             if self.has_sub_line == "no":
-                                if self.cross_detect == 1 :#and self.bay_count == self.row :#uncomment here when done
+                                if self.cross_detect == 1 and self.bay_count == self.row :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.bay_count == self.row:
                                         self.flag_2 = 1
@@ -1707,7 +1698,7 @@ class line_follow():
                                         self.row_count = self.bay_count
                             else:
                                 #print("here1111111112222",self.bay_count)
-                                if self.cross_detect == 1 :#and self.bay_count == self.bay :#uncomment here when done
+                                if self.cross_detect == 1 and self.bay_count == self.bay :#uncomment here when done
                                     self.now_encoder = -(self.t_enc)
                                     if self.bay_count == self.bay:
                                         self.take_pallet = 2
@@ -2030,17 +2021,18 @@ class line_follow():
                 self.dir_out                = 0
                 self.count_10               = 0 
                 self.charger_ready = 0
-#                self.file_count += 1
-#                self.logger = logging.getLogger('line_folow_%s'%self.file_count)
-#                self.hdlr = logging.FileHandler('log_line/log_%s.txt' %self.file_count)
-#                self.formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-#                self.hdlr.setFormatter(self.formatter)
-#                self.logger.addHandler(self.hdlr) 
-#                self.logger.setLevel(logging.INFO)
                 if self.charger_flag == 0:
                     self.line_pub.publish(3000)
                 else:
                     pass
+                self.file_count += 1
+                logger = logging.getLogger('line_folow')
+                hdlr = logging.FileHandler('log_line/log_%s.txt',self.file_count)
+                formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+                hdlr.setFormatter(formatter)
+                logger.addHandler(hdlr) 
+                logger.setLevel(logging.INFO)
+                
                 
             elif self.PID_enable == 1:
                 if self.flag_laser == 0:
@@ -2055,10 +2047,6 @@ class line_follow():
                 elif self.flag_laser == 2:
                     if self.traffic_flag == 2:
                         self.taking_pallet()
-                        self.logger.info('mag_back ',self.mag_ss)
-                        self.logger.info('take_pallet ',self.take_pallet)
-                        self.logger.info('row_count ',self.row_count)
-                        self.logger.info('bay_count ',self.bay_count)
                     elif self.traffic_flag == 0:
                         self.vel_pub.publish(0)
                     else:
