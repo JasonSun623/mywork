@@ -49,8 +49,6 @@ class line_follow():
         self.last_proportional       = 0
         self.integral                = 0
         self.home_value              = 5200
-        self.last_ster_val           = 0
-        self.full_line_flag          = 0
         self.angle                   = 0
         self.temp                    = 0
         self.pos_left                = 0
@@ -200,10 +198,7 @@ class line_follow():
             self.cross_front_detect = 0
         if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
             self.no_line_flag_front = 1
-        elif self.mag_ss_front == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
-            self.full_line_flag = 1     
         else:
-            self.full_line_flag = 0
             self.no_line_flag_front = 0
         # REMEMBER CHECK THIS FUNCTION(WRITE NEW 14/11/2017 BY DONGHO)
         #######################__MAGNETIC_ADD_SENSOR__########################
@@ -447,84 +442,80 @@ class line_follow():
         
     #####################__angle_control__#####################
     def angle_controll(self,speed):
-        if self.full_line_flag == 1:
-            self.vel_pub.publish(speed)
-            self.ste_pub.publish(self.angle)
+        pos = self.position(self.mag_ss)
+        turning_value = self.pid_cal(self.position(self.mag_ss),30,150)#35,5
+        ###print turning_value,int(turning_value)
+        self.angle = self.home_value + turning_value
+        self.angle = round(self.angle)
+        self.angle = int(self.angle)
+        if self.angle > self.home_value:
+            self.angle += 21
+        if self.angle < self.home_value :
+            self.angle += 45#2
         else:
-            pos = self.position(self.mag_ss)
-            turning_value = self.pid_cal(self.position(self.mag_ss),30,150)#35,5
-            ###print turning_value,int(turning_value)
-            self.angle = self.home_value + turning_value
-            self.angle = round(self.angle)
-            self.angle = int(self.angle)
-            if self.angle > self.home_value:
-                self.angle += 21
-            if self.angle < self.home_value :
-                self.angle += 45#2
+            self.angle = self.angle
+        ##print "self.angle",self.angle,"pos",pos
+        if self.angle > self.home_value + 150 and self.angle <= self.home_value + 250 :
+            self.angle +=45
+            if speed < 0:
+                speed = speed + 50
+            elif speed == 0:
+                speed = 0
             else:
-                self.angle = self.angle
-            ##print "self.angle",self.angle,"pos",pos
-            if self.angle > self.home_value + 150 and self.angle <= self.home_value + 250 :
-                self.angle +=45
-                if speed < 0:
-                    speed = speed + 50
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            elif self.angle > self.home_value + 250 and self.angle <= self.home_value + 350 :
-                self.angle = self.angle + 250
-                #self.angle = 750
-                if speed < 0:
-                    speed = speed + 150
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            elif self.angle > self.home_value + 350 :
-                self.angle = self.angle + 300
-                #self.angle = 750
-                if speed < 0:
-                    speed = speed + 150
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            elif self.angle < self.home_value - 100 and self.angle >= self.home_value - 200:
-                self.angle += -10#10
-                if speed < 0:
-                    speed = speed + 50
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            elif self.angle < self.home_value - 200 and self.angle >= self.home_value - 300 : 
-                self.angle = self.angle - 200
-                if speed < 0:
-                    speed = speed + 150
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            elif self.angle < self.home_value - 300 : 
-                self.angle = self.angle - 250
-                if speed < 0:
-                    speed = speed + 150
-                elif speed == 0:
-                    speed = 0
-                else:
-                    speed = speed - 200
-            ##print "speed",speed, "angle",self.angle#,"pos",pos
-            self.vel_pub.publish(speed)
-            self.ste_pub.publish(self.angle)
-            if pos >= 15:
-                self.balance_flag = 1
-                self.timer(pos,self.loss_line_flag_1)
-            elif pos <= 2:
-                self.balance_flag = 1
-                self.timer(pos,self.loss_line_flag_1)
+                speed = speed - 200
+        elif self.angle > self.home_value + 250 and self.angle <= self.home_value + 350 :
+            self.angle = self.angle + 250
+            #self.angle = 750
+            if speed < 0:
+                speed = speed + 150
+            elif speed == 0:
+                speed = 0
             else:
-                pass
+                speed = speed - 200
+        elif self.angle > self.home_value + 350 :
+            self.angle = self.angle + 300
+            #self.angle = 750
+            if speed < 0:
+                speed = speed + 150
+            elif speed == 0:
+                speed = 0
+            else:
+                speed = speed - 200
+        elif self.angle < self.home_value - 100 and self.angle >= self.home_value - 200:
+            self.angle += -10#10
+            if speed < 0:
+                speed = speed + 50
+            elif speed == 0:
+                speed = 0
+            else:
+                speed = speed - 200
+        elif self.angle < self.home_value - 200 and self.angle >= self.home_value - 300 : 
+            self.angle = self.angle - 200
+            if speed < 0:
+                speed = speed + 150
+            elif speed == 0:
+                speed = 0
+            else:
+                speed = speed - 200
+        elif self.angle < self.home_value - 300 : 
+            self.angle = self.angle - 250
+            if speed < 0:
+                speed = speed + 150
+            elif speed == 0:
+                speed = 0
+            else:
+                speed = speed - 200
+        ##print "speed",speed, "angle",self.angle#,"pos",pos
+        self.vel_pub.publish(speed)
+        self.ste_pub.publish(self.angle)
+        if pos >= 15:
+            self.balance_flag = 1
+            self.timer(pos,self.loss_line_flag_1)
+        elif pos <= 2:
+            self.balance_flag = 1
+            self.timer(pos,self.loss_line_flag_1)
+        else:
+            pass
     ###############################################################################
     
     def angle_controll_front(self,speed):
@@ -1966,7 +1957,6 @@ class line_follow():
                 self.error                  = 0
                 self.set_point              = 8
                 self.last_proportional      = 0
-                self.last_ster_val          = 0
                 self.integral               = 0
                 self.home_value             = 5200
                 self.angle                  = 0
@@ -1985,7 +1975,6 @@ class line_follow():
                 self.take_pallet            = 0
                 self.status                 = 0
                 self.temp_2                 = 0
-                self.full_line_flag         = 0
                 self.count                  = 0
                 self.count_1                = 0
                 self.count_2                = 0
