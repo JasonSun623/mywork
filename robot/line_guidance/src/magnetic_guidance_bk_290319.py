@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Tue Nov 14 08:46:12 2017
@@ -133,8 +134,6 @@ class line_follow():
         self.charger_flag            = 0
         self.cros_count              = 0
         self.file_count              = 0
-        self.front_flag              = 0
-        self.front_flag_             = 0
         self.encoder_var             = 2.2
 #        self.logger = logging.getLogger('line_folow')
 #        self.hdlr = logging.FileHandler('log_line/log.txt')
@@ -666,7 +665,7 @@ class line_follow():
                     self.last_encoder_3 = -(self.t_enc)
                     self.count_2 = 1
                 elif self.count_2 == 1:
-                    if ((self.last_encoder_3) + (self.t_enc)) < -217*self.encoder_var:
+                    if ((self.last_encoder_3) + (self.t_enc)) < -212*self.encoder_var:
                         for i in range(5):
                             self.vel_pub.publish(0)
                             self.ste_pub.publish(self.home_value)
@@ -996,7 +995,7 @@ class line_follow():
                                     self.last_encoder_3 = -(self.t_enc)
                                     self.count_2 = 1
                                 elif self.count_2 == 1:
-                                    if ((self.last_encoder_3) + (self.t_enc)) < -217*self.encoder_var:
+                                    if ((self.last_encoder_3) + (self.t_enc)) < -212*self.encoder_var:
                                         for i in range(5):
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(self.home_value)
@@ -1300,7 +1299,7 @@ class line_follow():
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 11
-                                elif ((self.last_encoder_2) + (self.t_enc)) >= 1350*self.encoder_var :
+                                elif ((self.last_encoder_2) + (self.t_enc)) >= 760*self.encoder_var :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 12
@@ -1362,11 +1361,6 @@ class line_follow():
                                     self.ste_pub.publish(2000)
                                     self.take_pallet = 15
                                     self.last_encoder_4 = 0
-                                    if self.bay == 1:
-                                        self.front_flag = 1
-                                        self.front_flag_ = 1
-                                    else:
-                                        pass
                                 else:
                                     self.vel_pub.publish(1200)
                                     self.ste_pub.publish(2000)
@@ -1383,33 +1377,16 @@ class line_follow():
                                 pass
                         elif self.take_pallet == 15:
                             if self.dir_sub == 2:
-                                if self.count_front_magss >= 1:
-                                    if self.front_flag == 1:
-                                        if self.front_flag_ == 1:
-                                            if self.position(self.mag_ss_front) >= 2 and self.position(self.mag_ss_front) <= 15 and self.no_line_flag_front == 0 :
-                                                self.vel_pub.publish(0)
-                                                self.ste_pub.publish(self.home_value)
-                                                self.front_flag = 0
-                                                self.front_flag_ = 0
-                                                self.take_pallet = 16
-                                            else:
-                                                self.vel_pub.publish(1000)
-                                                self.ste_pub.publish(2000)
-                                        else:
-                                            self.front_flag  = 1
-                                        
-                                    else:
-                                        self.front_flag  = 1
-                                        self.vel_pub.publish(1000)
-                                        self.ste_pub.publish(2000)
+                                if self.count_front_magss >= 8:
+                                    pass
+                                elif self.position(self.mag_ss_front) >= 6 and self.position(self.mag_ss_front) <= 11 and self.no_line_flag_front == 0 :
+                                    self.vel_pub.publish(0)
+                                    self.ste_pub.publish(self.home_value)
+                                    self.take_pallet = 16
+                                    #print("self.position(self.mag_ss_front)",self.position(self.mag_ss_front))
                                 else:
-                                    if self.front_flag == 1:
-                                        self.front_flag_ = 1
-                                        self.vel_pub.publish(1000)
-                                        self.ste_pub.publish(2000)
-                                    else:
-                                        self.vel_pub.publish(1000)
-                                        self.ste_pub.publish(2000)
+                                    self.vel_pub.publish(1000)
+                                    self.ste_pub.publish(2000)
                             elif self.dir_sub == 1:
                                 if self.position(self.mag_ss_front) >= 6 and self.position(self.mag_ss_front) <= 11  and self.no_line_flag_front == 0 :
                                     self.vel_pub.publish(0)
@@ -1736,7 +1713,7 @@ class line_follow():
                 elif self.take_pallet == 4:
                     self.flag_2 = 1
                     if self.position(self.mag_ss_front) < 16 and self.no_line_flag_front == 0 :
-                        self.take_pallet = 1
+                        self.take_pallet = 5
                         self.flag_2 = 0
                     else:
                         self.vel_pub.publish(1100)
@@ -1747,6 +1724,7 @@ class line_follow():
                         self.take_pallet = 6
                     else:
                         self.flag_2 = 0
+                        self.flag = 0
                         self.angle_controll_front(1200)  
                         ##print("self.bay_count = ",self.bay_count)
 #                        if self.count_front_magss < 16 and self.loss_line_temp_3 == 0  :
@@ -1976,8 +1954,6 @@ class line_follow():
                 self.line_ord_count         = 0
                 self.row                    = 0
                 self.dir_out                = 0
-                self.front_flag             = 0
-                self.front_flag_            = 0
                 self.count_10               = 0 
                 self.charger_ready          = 0
                 self.encoder_var            = 2.2
@@ -2111,3 +2087,10 @@ class line_follow():
 if __name__ == '__main__':
     run = line_follow()
     run.main()
+
+"""
+Created on Fri Mar 29 07:48:13 2019
+
+@author: dongho
+"""
+
