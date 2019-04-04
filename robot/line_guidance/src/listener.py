@@ -18,13 +18,13 @@ from std_msgs.msg import String
 #    format="%(asctime)s:%(levelname)s:%(message)s"
 #    )
 
-import logging
-logger = logging.getLogger('myapp')
-hdlr = logging.FileHandler('log_line/log.txt')
-formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr) 
-logger.setLevel(logging.INFO)
+#import logging
+#logger = logging.getLogger('myapp')
+#hdlr = logging.FileHandler('log_line/log.txt')
+#formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+#hdlr.setFormatter(formatter)
+#logger.addHandler(hdlr) 
+#logger.setLevel(logging.INFO)
 #def logfile(filename,data):
 #    if not os.path.exists(os.path.dirname(filename)):
 #        try:
@@ -35,23 +35,31 @@ logger.setLevel(logging.INFO)
 #    
 #    with open(filename, "w") as f:
 #        f.writelines('%s\n' % data)
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
-    logger.info('data %s', data.data)
-    #logToFile('/log_line/log.txt',data.data)
-def listener():
 
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
+class line_follow():
 
-    rospy.Subscriber("chatter", String, callback)
-
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
-
+    ##############################____INIT____############################
+    
+    def __init__(self):
+        self,count = 0
+        rospy.init_node('LINE_FOLLOWER')
+        key_sub = rospy.Subscriber('/key_press', String, self.key_callback)
+        
+    def key_callback(self,msg):
+        data = msg.data
+        if data == 'stop pid':
+            self.PID_enable = 2
+        elif data == 'key p is press' :
+            self.PID_enable = 1
+        elif data == 'key m is press' :
+            self.PID_enable = 2
+        elif data == 'key l is press' :
+            self.PID_enable = 3
+        elif data == 'key j is press' :
+            self.PID_enable = 4
+        elif data == 'key k is press':
+            self.PID_enable = 5
+        
 if __name__ == '__main__':
-    listener()
+    run = line_follow()
+    run.main()

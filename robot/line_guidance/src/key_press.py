@@ -21,7 +21,7 @@ while key != ord('q'):
     stdscr.refresh()
     if key ==ord('p'):
         cmd_pub.publish(1203)
-	pub.publish('key p is press')
+        pub.publish('key p is press')
 	#t_pub.publish(-600)
         #print 'key p is press'
     elif key == ord('m') : 
