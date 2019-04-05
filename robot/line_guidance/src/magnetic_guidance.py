@@ -287,38 +287,41 @@ class line_follow():
     
     def server_callback(self,msg):
         data = msg.data
-        if data != 0 and self.data_flag == 0:          
-            dict_data           = json.loads(data)
-            self.pallet         = dict_data["pallet"] 
-            self.dir_main       = dict_data["dir_main"]
-            self.has_sub_line   = dict_data["hasSubLine"]
-            self.dir_sub        = dict_data["dir_sub"]
-            self.row            = dict_data["row"] + 1
-            self.dir_out        = dict_data["dir_out"] + 1
-            try:
-                self.line_ord       = dict_data["line_ord"] + 1
-            except:
-                self.line_ord = 1
-            
-            if dict_data["hasSubLine"] == "yes" and dict_data["dir_sub"] == 1:
-                if dict_data["bay"] == 0:
-                    self.bay = (dict_data["bay"] + 2)
+        dict_data = json.loads(data)
+        if len(dict_data) == 8 and self.check_dict(dict_data):
+            if self.data_flag == 0:          
+                self.pallet         = dict_data["pallet"] 
+                self.dir_main       = dict_data["dir_main"]
+                self.has_sub_line   = dict_data["hasSubLine"]
+                self.dir_sub        = dict_data["dir_sub"]
+                self.row            = dict_data["row"] + 1
+                self.dir_out        = dict_data["dir_out"] + 1
+                try:
+                    self.line_ord       = dict_data["line_ord"] + 1
+                except:
+                    self.line_ord = 1
+                    
+                if dict_data["hasSubLine"] == "yes" and dict_data["dir_sub"] == 1:
+                    if dict_data["bay"] == 0:
+                        self.bay = (dict_data["bay"] + 2)
+                    else:
+                        self.bay = (dict_data["bay"] + 1) * 2
                 else:
-                    self.bay = (dict_data["bay"] + 1) * 2
-            else:
-                if dict_data["bay"] == 0:
-                    self.bay   = (dict_data["bay"] + 1)
+                    if dict_data["bay"] == 0:
+                        self.bay   = (dict_data["bay"] + 1)
+                    else:
+                        self.bay   = (((dict_data["bay"] +1 ) * 2) - 1)
+                print(dict_data)
+                if self.pallet == 2:
+                    self.PID_enable = 3
                 else:
-                    self.bay   = (((dict_data["bay"] +1 ) * 2) - 1)
-            print(dict_data)
-            if self.pallet == 2:
-                self.PID_enable = 3
+                    self.PID_enable = 1
+                self.data_flag = 1
+                ###print(dict_data["row"],type(dict_data["row"]))
             else:
-                self.PID_enable = 1
-            self.data_flag = 1
-            ###print(dict_data["row"],type(dict_data["row"]))
+                print("sent data 2 times or more")
         else:
-            print("data 2 ",data)
+            print("error check data ",data)
     ##########################__Key_callback__###########################
     
     def key_callback(self,msg):
@@ -539,6 +542,92 @@ class line_follow():
                 self.timer(pos,self.loss_line_flag_1)
             else:
                 pass
+            
+            ##################################################################
+    def angle_controll_(self,speed):
+        if self.full_line_flag == 1:
+            self.vel_pub.publish(speed)
+            self.ste_pub.publish(self.angle)
+        else:
+            pos = self.position(self.mag_ss)
+            turning_value = self.pid_cal(self.position(self.mag_ss),30,150)#35,5
+            ###print turning_value,int(turning_value)
+            self.angle = self.home_value + turning_value
+            self.angle = round(self.angle)
+            self.angle = int(self.angle)
+            if self.angle > self.home_value:
+                self.angle += 21
+            if self.angle < self.home_value :
+                self.angle += 45#2
+            else:
+                self.angle = self.angle
+            ##print "self.angle",self.angle,"pos",pos
+            if self.angle > self.home_value + 150 and self.angle <= self.home_value + 250 :
+                self.angle +=45
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            elif self.angle > self.home_value + 250 and self.angle <= self.home_value + 350 :
+                self.angle = self.angle + 250
+                #self.angle = 750
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            elif self.angle > self.home_value + 350 :
+                self.angle = self.angle + 300
+                #self.angle = 750
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            elif self.angle < self.home_value - 100 and self.angle >= self.home_value - 200:
+                self.angle += -10#10
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            elif self.angle < self.home_value - 200 and self.angle >= self.home_value - 300 : 
+                self.angle = self.angle - 200
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            elif self.angle < self.home_value - 300 : 
+                self.angle = self.angle - 250
+                if speed < 0:
+                    speed = speed + 0
+                elif speed == 0:
+                    speed = 0
+                else:
+                    speed = speed - 0
+            ##print "speed",speed, "angle",self.angle#,"pos",pos
+            self.vel_pub.publish(speed)
+            self.ste_pub.publish(self.angle)
+            if pos >= 15:
+                self.balance_flag = 1
+                self.timer(pos,self.loss_line_flag_1)
+            elif pos <= 2:
+                self.balance_flag = 1
+                self.timer(pos,self.loss_line_flag_1)
+            else:
+                pass
+            
+    ###############################################################################
+    
+    def check_dict(self,d):
+        return None not in d.viewvalues()
     ###############################################################################
     
     def angle_controll_front(self,speed):
@@ -923,7 +1012,7 @@ class line_follow():
                                                     self.loss_line_temp_3 = 0
                                             else:
                                                 if self.bay_count == (self.bay - 1):
-                                                    self.angle_controll(-1150)
+                                                    self.angle_controll_(-1150)
                                                     self.balance_flag = 0
                                                     self.turn_flag = 0
                                                 else:
@@ -959,7 +1048,7 @@ class line_follow():
                                                     self.loss_line_temp_3 = 0
                                             else:
                                                 if self.bay_count == (self.bay - 1):
-                                                    self.angle_controll(-1150)
+                                                    self.angle_controll_(-1150)
                                                     self.balance_flag = 0
                                                     self.turn_flag = 0
                                                 else:
@@ -1015,7 +1104,7 @@ class line_follow():
 #                                        self.loss_line_temp_3 = 0
                                     self.flag = 0
                                     if self.bay_count == (self.bay - 1):
-                                        self.angle_controll(-1150)
+                                        self.angle_controll_(-1150)
                                         self.balance_flag = 0
                                         self.turn_flag = 0
                                     else:
@@ -1354,7 +1443,7 @@ class line_follow():
 #                                    self.vel_pub.publish(0)
 #                                    self.ste_pub.publish(self.home_value)
 #                                    self.take_pallet = 11
-                                if ((self.last_encoder_2) + (self.t_enc)) >= int(1250*self.encoder_var) :
+                                if ((self.last_encoder_2) + (self.t_enc)) >= int(1150*self.encoder_var) :
                                     self.vel_pub.publish(0)
                                     self.ste_pub.publish(self.home_value)
                                     self.take_pallet = 12
@@ -1373,6 +1462,10 @@ class line_follow():
                                 else:
                                     self.vel_pub.publish(1200)
                                     self.ste_pub.publish(self.home_value)
+                            else:
+                                self.vel_pub.publish(0)
+                                self.ste_pub.publish(2000)
+                                print("self.dir_sub",self.dir_sub)
                         elif self.take_pallet == 11:
                             self.vel_pub.publish(-1000)
                             self.ste_pub.publish(self.home_value)
@@ -1432,7 +1525,9 @@ class line_follow():
                                     self.vel_pub.publish(-1200)
                                     self.ste_pub.publish(2000)
                             else:
-                                pass
+                                self.vel_pub.publish(0)
+                                self.ste_pub.publish(2000)
+                                print("self.dir_sub",self.dir_sub)
                         elif self.take_pallet == 15:
                             if self.dir_sub == 2:
                                 #print("((self.last_encoder_90_d) + (self.t_enc))",((self.last_encoder_90_d) + (self.t_enc)))
@@ -2092,7 +2187,7 @@ class line_follow():
                 elif self.flag_laser == 2:
                     if self.traffic_flag == 2 and self.manual_var == 0 :
                         self.taking_pallet()
-                        print("self.take_pallet",self.take_pallet)
+                        #shprint("self.take_pallet",self.take_pallet)
                         if self.cross_detect == 1:
                             print(self.mag_ss , "row",self.row_count ,"bay",self.bay_count)
                         else:
