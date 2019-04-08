@@ -136,14 +136,15 @@ class line_follow():
         self.count_10                = 0 
         self.charger_flag            = 0
         self.cros_count              = 0
+        self.cros_count_front        = 0
         self.file_count              = 0
         self.front_flag              = 0
         self.count_tmp               = 0
-        self.enc_90                  = 4344#1975
+        self.enc_90                  = 1975#4344#1975
         self.last_encoder_90_d       = 0
         self.front_flag_             = 0
         self.data_flag               = 0
-        self.encoder_var             = 2.2
+        self.encoder_var             = 1#2.2
 #        self.logger = logging.getLogger('line_folow')
 #        self.hdlr = logging.FileHandler('log_line/log.txt')
 #        self.formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -288,7 +289,7 @@ class line_follow():
         data = msg.data
         if data == 0:
             self.traffic_flag = 0
-        elif data == 2:
+        elif data == 2 or data == 1:
             self.traffic_flag = 2
         else:
             pass
@@ -1155,10 +1156,10 @@ class line_follow():
                                     if ((self.last_encoder_3) + (self.t_enc)) < int(-200*self.encoder_var) or self.count_3 >=40:
                                         print("(self.last_encoder_3) + (self.t_enc)",(self.last_encoder_3) + (self.t_enc),"self.count_3",self.count_3)
                                         self.count_19 += 1 
-                                        if self.count_19 <= 20:
+                                        if self.count_19 <= 15:
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(self.home_value)
-                                        elif self.count_19 > 20 and self.count_19 <= 35:
+                                        elif self.count_19 > 15 and self.count_19 <= 35:
                                             self.vel_pub.publish(0)
                                             self.ste_pub.publish(2000)
                                         else:
@@ -2124,7 +2125,7 @@ class line_follow():
                 self.loss_line_temp_2       = 0
                 self.loss_line_temp_3       = 0
                 self.loss_line_temp_4       = 0
-                self.enc_90                 = 4344#1975
+                self.enc_90                 = 1975#4344#1975
                 self.last_encoder_90_d      = 0
                 self.out_take_pallet        = 0
                 self.out_put_pallet         = 0
@@ -2149,6 +2150,7 @@ class line_follow():
                 self.dir_main_temp          = 0
                 self.dir_main_count         = 0
                 self.cros_count             = 0
+                self.cros_count_front       = 0
                 self.traffic_flag           = 2
                 #self.row = 2
                 self.bay                    = 0
@@ -2165,7 +2167,7 @@ class line_follow():
                 self.count_10               = 0 
                 self.data_flag              = 0
                 self.charger_ready          = 0
-                self.encoder_var            = 2.2
+                self.encoder_var            = 1#2.2
 #                self.file_count += 1
 #                self.logger = logging.getLogger('line_folow_%s'%self.file_count)
 #                self.hdlr = logging.FileHandler('log_line/log_%s.txt' %self.file_count)
