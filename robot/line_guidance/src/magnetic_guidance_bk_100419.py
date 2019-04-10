@@ -60,8 +60,6 @@ class line_follow():
         self.list_a                  = [7,6,5]
         self.list_b                  = [10,11,12]
         self.stear_enc               = 0
-        self.cross_count             = 0
-        self.cross_count_front       = 0
         self.t_enc                   = 0
         self.temp_1                  = 0
         self.time                    = 0
@@ -194,20 +192,20 @@ class line_follow():
         self.mag_ss = map(int,mag_value_not)
         self.count_magss = mag_sensor.count('0')
         if self.count_magss >= 14:
-            self.cross_count = 1
+            self.cross_detect = 1
         else:
-            pass
-        if self.cross_count == 1:
-            self.cros_count += 1
-            if self.cros_count <= 250:
-                self.cross_detect = 1
+            if self.cross_detect == 1:
+                self.cros_count += 1
+                self.cross_detect = 2
+            elif self.cross_detect == 2:
+                if self.cros_count <= 20:
+                    self.cross_detect = 2
+                else:
+                    self.cross_detect = 0 
+                    self.cros_count = 0
             else:
-                print("self.cros_count",self.cros_count)
+                self.cros_count = 0  ####them toi 4/4/2019
                 self.cross_detect = 0
-                self.cross_count = 0
-                self.cros_count  = 0
-        else:
-            pass
         if self.mag_ss == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
             self.no_line_flag = 1
         else:
@@ -219,20 +217,20 @@ class line_follow():
         self.mag_ss_front = map(int,mag_value_not)
         self.count_front_magss = mag_sensor.count('0')
         if self.count_front_magss >= 14:
-            self.cross_count_front  = 1
+            self.cross_front_detect = 1
         else:
-            pass
-        if self.cross_count_front  == 1:
-            self.cros_count_front += 1
-            if self.cros_count_front <= 200:
-                self.cross_front_detect = 1
+            if self.cross_front_detect == 1:
+                self.cros_count_front += 1
+                self.cross_front_detect = 2
+            elif self.cross_front_detect == 2:
+                if self.cros_count_front <= 20:
+                    self.cross_front_detect = 2
+                else:
+                    self.cross_front_detect = 0 
+                    self.cros_count_front = 0
             else:
-                print("self.cros_count_front",self.cros_count_front)
+                self.cros_count_front = 0  ####them toi 4/4/2019
                 self.cross_front_detect = 0
-                self.cros_count_front = 0
-                self.cross_count_front = 0
-        else:
-            pass
         if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
             self.no_line_flag_front = 1
         elif self.mag_ss_front == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
@@ -788,7 +786,7 @@ class line_follow():
                     self.last_encoder_3 = -(self.t_enc)
                     self.count_2 = 1
                 elif self.count_2 == 1:
-                    if ((self.last_encoder_3) + (self.t_enc)) < int(-220*self.encoder_var):
+                    if ((self.last_encoder_3) + (self.t_enc)) < int(-200*self.encoder_var):
                         for i in range(5):
                             self.vel_pub.publish(0)
                             self.ste_pub.publish(self.home_value)
@@ -1121,7 +1119,7 @@ class line_follow():
                                     self.count_2 = 1
                                 elif self.count_2 == 1:
                                     self.count_3 += 1
-                                    if ((self.last_encoder_3) + (self.t_enc)) < int(-220*self.encoder_var) or self.count_3 >=44:
+                                    if ((self.last_encoder_3) + (self.t_enc)) < int(-200*self.encoder_var) or self.count_3 >=40:
                                         print("(self.last_encoder_3) + (self.t_enc)",(self.last_encoder_3) + (self.t_enc),"self.count_3",self.count_3)
                                         self.count_19 += 1 
                                         if self.count_19 <= 20:
@@ -2101,8 +2099,6 @@ class line_follow():
                 self.row_count              = 0
                 self.row_countout           = 0
                 self.turn_off_pc_flag       = 0
-                self.cross_count            = 0
-                self.cross_count_front      = 0
                 self.no_line_flag           = 0
                 self.dir_main_temp          = 0
                 self.dir_main_count         = 0

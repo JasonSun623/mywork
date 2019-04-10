@@ -194,20 +194,29 @@ class line_follow():
         self.mag_ss = map(int,mag_value_not)
         self.count_magss = mag_sensor.count('0')
         if self.count_magss >= 14:
-            self.cross_count = 1
-        else:
-            pass
-        if self.cross_count == 1:
-            self.cros_count += 1
-            if self.cros_count <= 250:
+            if self.cross_count == 0:
+                self.cross_count = 1
                 self.cross_detect = 1
+                self.cros_count = 0
             else:
-                print("self.cros_count",self.cros_count)
-                self.cross_detect = 0
-                self.cross_count = 0
-                self.cros_count  = 0
+                self.cross_count = 2
+                self.cross_detect = 1
+                self.cros_count = 0
         else:
-            pass
+            self.cros_count += 1
+            if self.cross_count == 1:
+                self.cross_detect = 1
+                self.cross_count = 2
+            elif self.cross_count == 2:
+                if self.cros_count <= 20:
+                    self.cross_detect = 1
+                else:
+                    self.cross_detect = 0 
+                    self.cros_count = 0
+                    self.cross_count = 0
+#            else:
+#                self.cros_count = 0  ####them toi 4/4/2019
+#                self.cross_detect = 0
         if self.mag_ss == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
             self.no_line_flag = 1
         else:
@@ -219,20 +228,28 @@ class line_follow():
         self.mag_ss_front = map(int,mag_value_not)
         self.count_front_magss = mag_sensor.count('0')
         if self.count_front_magss >= 14:
-            self.cross_count_front  = 1
-        else:
-            pass
-        if self.cross_count_front  == 1:
-            self.cros_count_front += 1
-            if self.cros_count_front <= 200:
+            if self.cross_front_detect == 0:
+                self.cross_count_front = 1
                 self.cross_front_detect = 1
-            else:
-                print("self.cros_count_front",self.cros_count_front)
-                self.cross_front_detect = 0
                 self.cros_count_front = 0
-                self.cross_count_front = 0
+            else:
+                self.cross_count_front  = 2
+                self.cross_front_detect = 1
+                self.cros_count_front = 0
         else:
-            pass
+            self.cros_count_front += 1
+            if self.cross_count_front == 1:
+                self.cross_front_detect = 1
+            elif self.cross_count_front == 2:
+                if self.cros_count_front <= 20:
+                    self.cross_front_detect = 1
+                else:
+                    self.cross_count_front = 0
+                    self.cross_front_detect = 0 
+                    self.cros_count_front = 0
+#            else:
+#                self.cros_count_front = 0  ####them toi 4/4/2019
+#                self.cross_front_detect = 0
         if self.mag_ss_front == [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]:
             self.no_line_flag_front = 1
         elif self.mag_ss_front == [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
